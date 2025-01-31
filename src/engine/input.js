@@ -114,7 +114,7 @@ var Input = (function() {
             /** @type {InputAction} */
             let action = {
                 active: false,
-                keys: keys
+                keys: keys.map((k) => k.toLowerCase())
             };
 
             // set update method based on type

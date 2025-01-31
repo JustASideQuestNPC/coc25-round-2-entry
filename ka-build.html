@@ -40,7 +40,7 @@ globalThis.INPUT_BUFFER_DURATION = 0.15;
 /**
  * An action-based system for managing user input.
  */
-var Input = (function() {
+ var Input = (function() {
     /**
      * @typedef {Object} InputAction - A single input action.
      * @property {string[]} keys - Which keyboard keys and/or mouse buttons can activate the action.
@@ -153,7 +153,7 @@ var Input = (function() {
             /** @type {InputAction} */
             let action = {
                 active: false,
-                keys: keys
+                keys: keys.map((k) => k.toLowerCase())
             };
 
             // set update method based on type
