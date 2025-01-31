@@ -44,11 +44,13 @@ globalThis.Player = class extends Kepler.EntityBase {
         moveDir.normalize();
 
         // update velocity
-        this.velocity.set(moveDir)
-                     .mult(400);
+        this.velocity.set(moveDir.mult(400));
 
         // apply delta time and move
         this.position.add(p5.Vector.mult(this.velocity, dt));
+
+        // update the camera
+        Kepler.setCameraTarget(this.position);
     }
 
     render() {
@@ -65,5 +67,10 @@ globalThis.Player = class extends Kepler.EntityBase {
         line(0, 0, 0, -30);
 
         pop();
+    }
+
+    onAdd() {
+        // snap the camera to our position at the start
+        Kepler.setCameraPosition(this.position);
     }
 }

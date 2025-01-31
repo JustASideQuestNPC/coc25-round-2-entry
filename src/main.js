@@ -44,6 +44,10 @@ function setup() {
     // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
     Kepler.addEntity(new BackgroundGrid(4, 4));
     Kepler.addEntity(new Player(300, 300));
+
+    // set up some camera stuff
+    Kepler.cameraEnabled = true;
+    Kepler.setViewportBounds(0, 0, 1200, 1200);
 }
 
 /**
