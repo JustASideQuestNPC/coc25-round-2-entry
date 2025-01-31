@@ -19,22 +19,27 @@ function setup() {
     angleMode(DEGREES);
 
     // set up input actions
-    Input.addAction({
-        name: "move up",
-        keys: ["w", "ArrowUp"],
-    });
-    Input.addAction({
-        name: "move down",
-        keys: ["s", "ArrowDown"],
-    });
-    Input.addAction({
-        name: "move left",
-        keys: ["a", "ArrowLeft"],
-    });
-    Input.addAction({
-        name: "move right",
-        keys: ["d", "ArrowRight"],
-    });
+    for (const [bindName, bindKeys] of Object.entries(KEYBINDS)) {
+        // having two keybinds for shooting makes some things easier
+        if (bindName === "shoot") {
+            Input.addAction({
+                name: "shoot semi",
+                keys: bindKeys,
+                type: "press"
+            });
+            Input.addAction({
+                name: "shoot auto",
+                keys: bindKeys,
+                type: "hold"
+            });
+        }
+        else {
+            Input.addAction({
+                name: bindName,
+                keys: bindKeys
+            });
+        }
+    }
 
     // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
     Kepler.addEntity(new BackgroundGrid(4, 4));

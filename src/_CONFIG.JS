@@ -7,3 +7,15 @@
  */
 // note: attaching a variable to "globalThis" allows it to be accessible in other files
 globalThis.INPUT_BUFFER_DURATION = 0.15;
+
+/**
+ * Keybinds for all inputs.
+ * @type {Object<string, string[]>}
+ */
+globalThis.KEYBINDS = {
+    "move up": ["w", "ArrowUp"],
+    "move down": ["s", "ArrowDown"],
+    "move left": ["a", "ArrowLeft"],
+    "move right": ["d", "ArrowRight"],
+    "shoot": ["left mouse"]
+};
