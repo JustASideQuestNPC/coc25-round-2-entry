@@ -3,7 +3,7 @@
  * A grid in the background to show movement.
  * @class
  */
-// this is so freaking cursed i love it so much
+// this is so cursed i love it so much
 globalThis.BackgroundGrid = class extends Kepler.EntityBase {
     /** @type {number} */
     #width;
@@ -40,3 +40,35 @@ globalThis.BackgroundGrid = class extends Kepler.EntityBase {
         }
     }
 };
+
+/**
+ * A bullet fired from a projectile weapon.
+ * @class
+ */
+globalThis.Bullet = class extends Kepler.EntityBase {
+    /** @type {Vector} */
+    position;
+    /** @type {Vector} */
+    velocity;
+
+    /**
+     * @param {Vector} position
+     * @param {Vector} velocity
+     */
+    constructor(position, velocity) {
+        super(); // this does literally nothing but is still required because javascript
+
+        this.position = position.copy();
+        this.velocity = velocity.copy();
+    }
+
+    update(dt) {
+        this.position.add(p5.Vector.mult(this.velocity, dt))
+    }
+
+    render() {
+        noStroke();
+        fill("#000000");
+        circle(this.position.x, this.position.y, 8);
+    }
+}
