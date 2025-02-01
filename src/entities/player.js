@@ -12,6 +12,13 @@ globalThis.Player = class extends Kepler.EntityBase {
     facingAngle;
 
     /**
+     * The currently equipped weapon.
+     * @type {WeaponBase}
+     */
+    currentWeapon;
+
+
+    /**
      * @param {number} x
      * @param {number} y
      */
@@ -24,6 +31,9 @@ globalThis.Player = class extends Kepler.EntityBase {
         this.velocity = createVector();
 
         this.facingAngle = 0;
+
+        // this is currently hard-coded for testing but it will be changed later
+        this.currentWeapon = weapons.pistols[0];
     }
 
     update(dt) {
@@ -31,7 +41,16 @@ globalThis.Player = class extends Kepler.EntityBase {
         // find the position of the mouse relative to the player
         this.facingAngle = Kepler.screenPosToWorldPos(mouseX, mouseY)
                                  .sub(this.position)
-                                 .heading() + 90;
+                                 .heading();
+
+        // update weapon
+        if (Input.isActive("shoot semi")) {
+            this.currentWeapon.semiAutoFire();
+        }
+        if (Input.isActive("shoot auto")) {
+            this.currentWeapon.fullAutoFire();
+        }
+        this.currentWeapon.constantUpdate(dt, this.facingAngle, this.position);
 
         // get movement input - doing it this way means that opposite keys cancel each other out
         let moveDir = createVector();
@@ -64,7 +83,7 @@ globalThis.Player = class extends Kepler.EntityBase {
         fill("#33aaff");
 
         circle(0, 0, 60);
-        line(0, 0, 0, -30);
+        line(0, 0, 30, 0);
 
         pop();
     }

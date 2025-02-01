@@ -46,6 +46,34 @@ globalThis.KEYBINDS = {
     "move right": ["d", "ArrowRight"],
     "shoot": ["left mouse"]
 };
+
+/**
+ * Configs for all weapons, organized by category and name.
+ * @type {Object<string, Object[]>}
+ */
+globalThis.WEAPONS = {
+    "pistols": [
+        // starter gun
+        {
+            displayName: "Peashooter", // name shown in the ui
+            description: "Doesn't actually shoot peas.", // description shown in the ui
+            weaponType: "projectile", // "projectile", "hitscan", "explosive", or "special"
+            fireMode: "semi", // "semi" or "full"
+            fireRate: 450, // rounds per minute
+            burstRate: -1, // rounds per minute
+            shotsPerBurst: 1,
+            bulletsPerShot: 1,
+            minSpread: 0, // degrees
+            maxSpread: 10, // degrees
+            spreadBloom: 2, // degrees
+            spreadRecovery: 5, // degrees per second
+            shotVelocity: 1200, // pixels per second
+        }
+    ],
+    "autoRifles": [],
+    "sniperRifles": [],
+    "explosives": []
+};
 </script>
 <!-- src/engine/input.js -->
 <script type>
@@ -978,6 +1006,13 @@ globalThis.Bullet = class extends Kepler.EntityBase {
     facingAngle;
 
     /**
+     * The currently equipped weapon.
+     * @type {WeaponBase}
+     */
+    currentWeapon;
+
+
+    /**
      * @param {number} x
      * @param {number} y
      */
@@ -990,6 +1025,9 @@ globalThis.Bullet = class extends Kepler.EntityBase {
         this.velocity = createVector();
 
         this.facingAngle = 0;
+
+        // this is currently hard-coded for testing but it will be changed later
+        this.currentWeapon = weapons.pistols[0];
     }
 
     update(dt) {
@@ -997,7 +1035,16 @@ globalThis.Bullet = class extends Kepler.EntityBase {
         // find the position of the mouse relative to the player
         this.facingAngle = Kepler.screenPosToWorldPos(mouseX, mouseY)
                                  .sub(this.position)
-                                 .heading() + 90;
+                                 .heading();
+
+        // update weapon
+        if (Input.isActive("shoot semi")) {
+            this.currentWeapon.semiAutoFire();
+        }
+        if (Input.isActive("shoot auto")) {
+            this.currentWeapon.fullAutoFire();
+        }
+        this.currentWeapon.constantUpdate(dt, this.facingAngle, this.position);
 
         // get movement input - doing it this way means that opposite keys cancel each other out
         let moveDir = createVector();
@@ -1030,7 +1077,7 @@ globalThis.Bullet = class extends Kepler.EntityBase {
         fill("#33aaff");
 
         circle(0, 0, 60);
-        line(0, 0, 0, -30);
+        line(0, 0, 30, 0);
 
         pop();
     }
@@ -1267,7 +1314,7 @@ globalThis.Bullet = class extends Kepler.EntityBase {
  * @class
  * @extends {WeaponBase}
  */
-globalThis.projectileWeapon = class extends WeaponBase {
+globalThis.ProjectileWeapon = class extends WeaponBase {
     /**
      * Bullet speed in pixels per second.
      * @param {number}
@@ -1303,17 +1350,24 @@ globalThis.projectileWeapon = class extends WeaponBase {
     fire(angle, origin) {
         Kepler.addEntity(new Bullet(origin,
             // for some reason, fromAngle ignores angleMode
-            p5.Vector.fromAngle(radians(angle))
+            p5.Vector.fromAngle(radians(angle), this.shotVelocity)
         ))
     }
 }
 </script>
 <!-- src/main.js -->
 <script type>
+// all the global variables that don't fit into another file
+/**
+ * Class instances for every weapon.
+ * @type {Object<string, WeaponBase[]>}
+ */
+ globalThis.weapons = {};
+
 /**
  * Runs once when the program starts.
  */
- function setup() {
+function setup() {
     // weird funky html stuff - createCanvas() returns a reference to the canvas, but its a
     // p5.Element instance and we need an HTMLElement instance so we can add event listeners to it
     const c = createCanvas(600, 600);
@@ -1353,13 +1407,24 @@ globalThis.projectileWeapon = class extends WeaponBase {
         }
     }
 
-    // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
-    Kepler.addEntity(new BackgroundGrid(4, 4));
-    Kepler.addEntity(new Player(300, 300));
+    // generate weapons
+    for (const [category, configList] of Object.entries(WEAPONS)) {
+        let instances = [];
+        for (const weaponConfig of configList) {
+            if (weaponConfig.weaponType === "projectile") {
+                instances.push(new ProjectileWeapon(weaponConfig));
+            }
+        }
+        weapons[category] = instances;
+    }
 
     // set up some camera stuff
     Kepler.cameraEnabled = true;
     Kepler.setViewportBounds(0, 0, 1200, 1200);
+
+    // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
+    Kepler.addEntity(new BackgroundGrid(4, 4));
+    Kepler.addEntity(new Player(300, 300));
 }
 
 /**

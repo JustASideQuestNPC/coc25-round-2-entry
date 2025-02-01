@@ -222,7 +222,7 @@ globalThis.WeaponBase = class {
  * @class
  * @extends {WeaponBase}
  */
-globalThis.projectileWeapon = class extends WeaponBase {
+globalThis.ProjectileWeapon = class extends WeaponBase {
     /**
      * Bullet speed in pixels per second.
      * @param {number}
@@ -258,7 +258,7 @@ globalThis.projectileWeapon = class extends WeaponBase {
     fire(angle, origin) {
         Kepler.addEntity(new Bullet(origin,
             // for some reason, fromAngle ignores angleMode
-            p5.Vector.fromAngle(radians(angle))
+            p5.Vector.fromAngle(radians(angle), this.shotVelocity)
         ))
     }
 }

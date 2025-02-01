@@ -1,3 +1,10 @@
+// all the global variables that don't fit into another file
+/**
+ * Class instances for every weapon.
+ * @type {Object<string, WeaponBase[]>}
+ */
+globalThis.weapons = {};
+
 /**
  * Runs once when the program starts.
  */
@@ -41,13 +48,24 @@ function setup() {
         }
     }
 
-    // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
-    Kepler.addEntity(new BackgroundGrid(4, 4));
-    Kepler.addEntity(new Player(300, 300));
+    // generate weapons
+    for (const [category, configList] of Object.entries(WEAPONS)) {
+        let instances = [];
+        for (const weaponConfig of configList) {
+            if (weaponConfig.weaponType === "projectile") {
+                instances.push(new ProjectileWeapon(weaponConfig));
+            }
+        }
+        weapons[category] = instances;
+    }
 
     // set up some camera stuff
     Kepler.cameraEnabled = true;
     Kepler.setViewportBounds(0, 0, 1200, 1200);
+
+    // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
+    Kepler.addEntity(new BackgroundGrid(4, 4));
+    Kepler.addEntity(new Player(300, 300));
 }
 
 /**

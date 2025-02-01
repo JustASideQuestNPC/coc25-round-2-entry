@@ -19,3 +19,31 @@ globalThis.KEYBINDS = {
     "move right": ["d", "ArrowRight"],
     "shoot": ["left mouse"]
 };
+
+/**
+ * Configs for all weapons, organized by category and name.
+ * @type {Object<string, Object[]>}
+ */
+globalThis.WEAPONS = {
+    "pistols": [
+        // starter gun
+        {
+            displayName: "Peashooter", // name shown in the ui
+            description: "Doesn't actually shoot peas.", // description shown in the ui
+            weaponType: "projectile", // "projectile", "hitscan", "explosive", or "special"
+            fireMode: "semi", // "semi" or "full"
+            fireRate: 450, // rounds per minute
+            burstRate: -1, // rounds per minute
+            shotsPerBurst: 1,
+            bulletsPerShot: 1,
+            minSpread: 0, // degrees
+            maxSpread: 10, // degrees
+            spreadBloom: 2, // degrees
+            spreadRecovery: 5, // degrees per second
+            shotVelocity: 1200, // pixels per second
+        }
+    ],
+    "autoRifles": [],
+    "sniperRifles": [],
+    "explosives": []
+};
