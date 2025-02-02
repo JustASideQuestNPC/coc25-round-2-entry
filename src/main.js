@@ -6,6 +6,12 @@
 globalThis.weapons = {};
 
 /**
+ * Class instances for all sprites.
+ * @type {Object<string, Sprite>}
+ */
+globalThis.sprites = {};
+
+/**
  * Runs once when the program starts.
  */
 function setup() {
@@ -46,6 +52,11 @@ function setup() {
                 keys: bindKeys
             });
         }
+    }
+
+    // load all sprites
+    for (const [spriteName, spriteData] of Object.entries(SPRITE_DATA)) {
+        sprites[spriteName] = new Sprite(spriteData);
     }
 
     // generate weapons

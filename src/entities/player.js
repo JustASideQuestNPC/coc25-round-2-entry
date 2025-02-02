@@ -4,6 +4,9 @@
  * @class
  */
 globalThis.Player = class extends Kepler.EntityBase {
+    /** @type {Sprite} */
+    #sprite;
+
     /** @type {Vector} */
     position;
     /** @type {Vector} */
@@ -17,13 +20,15 @@ globalThis.Player = class extends Kepler.EntityBase {
      */
     currentWeapon;
 
-
     /**
      * @param {number} x
      * @param {number} y
      */
     constructor(x, y) {
         super(); // this does literally nothing but is still required because javascript
+
+        // grab a reference to our sprite so we don't have to get one every time we render
+        this.#sprite = sprites.player;
 
         // p5js really wants you to use createVector() over "new p5.Vector()"
         this.position = createVector(x, y);
@@ -73,19 +78,21 @@ globalThis.Player = class extends Kepler.EntityBase {
     }
 
     render() {
-        push();
-        // passing a vector translates to its x and y position
-        translate(this.position)
-        rotate(this.facingAngle);
+        this.#sprite.render(this.position, this.facingAngle);
+        
+        // push();
+        // // passing a vector translates to its x and y position
+        // translate(this.position)
+        // rotate(this.facingAngle);
 
-        stroke("#304250");
-        strokeWeight(6);
-        fill("#33aaff");
+        // stroke("#304250");
+        // strokeWeight(6);
+        // fill("#33aaff");
 
-        circle(0, 0, 60);
-        line(0, 0, 30, 0);
+        // circle(0, 0, 60);
+        // line(0, 0, 30, 0);
 
-        pop();
+        // pop();
     }
 
     onAdd() {

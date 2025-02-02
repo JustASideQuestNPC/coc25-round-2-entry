@@ -14,7 +14,7 @@
  * @type {Object<string, SpriteData>}
  */
 globalThis.SPRITE_DATA = {
-    "player": {
+    player: {
         width: 92,
         height: 92,
         origin: [31, 46],
