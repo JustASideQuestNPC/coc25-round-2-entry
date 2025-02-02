@@ -72,3 +72,28 @@ globalThis.Bullet = class extends Kepler.EntityBase {
         circle(this.position.x, this.position.y, 8);
     }
 }
+
+/**
+ * A static target, mainly for debugging.
+ * @class
+ */
+globalThis.StaticTarget = class extends Kepler.EntityBase {
+    /** @type {number} */
+    x;
+    /** @type {number} */
+    y;
+    
+    tags = [
+        EntityTag.IS_PLAYER_WEAPON_TARGET
+    ];
+
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
+    constructor(x, y) {
+        super();
+        this.x = x;
+        this.y = y;
+    }
+}
