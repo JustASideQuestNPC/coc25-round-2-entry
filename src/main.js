@@ -12,6 +12,106 @@ globalThis.weapons = {};
 globalThis.sprites = {};
 
 /**
+ * Whether async loading is complete. If this is false, lots of things are probably undefined!
+ * @type {boolean}
+ */
+let asyncLoadingComplete = false;
+
+/**
+ * Async function for loading everything.
+ */
+async function asyncPreload() {
+    // promises are complicated and even i don't fully understand how to use them, but the important
+    // part is that the code inside them runs at the same time as everything else (kinda)
+    console.log("Started async loading...");
+    // for performance timing
+    const asyncLoadStart = window.performance.now();
+
+    // start loading sprites
+    const loadSprites = new Promise((resolve) => {
+        // for performance timing
+        const loadStart = window.performance.now();
+
+        for (const [spriteName, spriteData] of Object.entries(SPRITE_DATA)) {
+            sprites[spriteName] = new Sprite(spriteData);
+        }
+
+        console.log(`Async loaded sprites in ${window.performance.now() - loadStart}ms`);
+
+        // end the promise
+        resolve();
+    });
+
+    // start loading weapons - in practice, this is fast enough that we could do it without a
+    // promise and not have any issues, but we're already using a promise for the sprites (which
+    // *are* slow enough to potentially be an issue) and using one for weapons probably makes me
+    // look smarter or something
+    const loadWeapons = new Promise((resolve) => {
+        // for performance timing
+        const loadStart = window.performance.now();
+
+        for (const [category, configList] of Object.entries(WEAPONS)) {
+            let instances = [];
+            for (const weaponConfig of configList) {
+                if (weaponConfig.weaponType === "projectile") {
+                    instances.push(new ProjectileWeapon(weaponConfig));
+                }
+            }
+            weapons[category] = instances;
+        }
+
+        console.log(`Async loaded weapons in ${window.performance.now() - loadStart}ms`);
+
+        // end the promise
+        resolve();
+    });
+
+    // start generating inputs
+    const loadInputs = new Promise((resolve) => {
+        // for performance timing
+        const loadStart = window.performance.now();
+
+        for (const [bindName, bindKeys] of Object.entries(KEYBINDS)) {
+            // having two keybinds for shooting makes some things easier
+            if (bindName === "shoot") {
+                Input.addAction({
+                    name: "shoot semi",
+                    keys: bindKeys,
+                    type: "press"
+                });
+                Input.addAction({
+                    name: "shoot auto",
+                    keys: bindKeys,
+                    type: "hold"
+                });
+            }
+            else {
+                Input.addAction({
+                    name: bindName,
+                    keys: bindKeys
+                });
+            }
+        }
+
+        console.log(`Async loaded inputs in ${window.performance.now() - loadStart}ms`);
+
+        // end the promise
+        resolve();
+    });
+
+    // now that we've spawned both promises, we wait for them to both finish - this will stop the
+    // code in this function from running, but the code outside of it will still keep going
+    await loadSprites;
+    await loadWeapons;
+    await loadInputs;
+
+    // set a flag to show that everything is loaded and safe to use
+    asyncLoadingComplete = true;
+
+    console.log(`Finished async loading in ${window.performance.now() - asyncLoadStart}ms`);
+}
+
+/**
  * Runs once when the program starts.
  */
 function setup() {
@@ -31,44 +131,10 @@ function setup() {
     // unlike on KA, the default angle mode in p5js is degrees
     angleMode(DEGREES);
 
-    // set up input actions
-    for (const [bindName, bindKeys] of Object.entries(KEYBINDS)) {
-        // having two keybinds for shooting makes some things easier
-        if (bindName === "shoot") {
-            Input.addAction({
-                name: "shoot semi",
-                keys: bindKeys,
-                type: "press"
-            });
-            Input.addAction({
-                name: "shoot auto",
-                keys: bindKeys,
-                type: "hold"
-            });
-        }
-        else {
-            Input.addAction({
-                name: bindName,
-                keys: bindKeys
-            });
-        }
-    }
-
-    // load all sprites
-    for (const [spriteName, spriteData] of Object.entries(SPRITE_DATA)) {
-        sprites[spriteName] = new Sprite(spriteData);
-    }
-
-    // generate weapons
-    for (const [category, configList] of Object.entries(WEAPONS)) {
-        let instances = [];
-        for (const weaponConfig of configList) {
-            if (weaponConfig.weaponType === "projectile") {
-                instances.push(new ProjectileWeapon(weaponConfig));
-            }
-        }
-        weapons[category] = instances;
-    }
+    // start loading everything - right now this has no effect because we're launching straight into
+    // gameplay, but eventually we'll be able to immediately start drawing logos and/or menus while
+    // everything else loads
+    asyncPreload();
 
     // set up some camera stuff
     Kepler.cameraEnabled = true;
@@ -83,6 +149,15 @@ function setup() {
  * Runs once per frame, just like in the original PJS.
  */
 function draw() {
+    // display a loading screen if async loading still isn't finished for some reason
+    if (!asyncLoadingComplete) {
+        // eventually we'll need to put an actual graphic here, but for now i'm just throwing up a
+        // black screen because people probably won't ever see this
+        background("#000000");
+        // skip the rest of draw()
+        return;
+    }
+
     Input.update();
     Kepler.update();
 
