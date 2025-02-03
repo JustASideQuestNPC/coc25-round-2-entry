@@ -595,7 +595,7 @@ var Kepler = (function() {
                 x = x.y;
             }
 
-            return createVector(x - renderX, y - renderY);
+            return createVector((x / cameraZoom) - renderX, (y / cameraZoom) - renderY);
         },
 
         /**
@@ -619,7 +619,7 @@ var Kepler = (function() {
                 x = x.x;
             }
 
-            return createVector(x + renderX, y + renderY);
+            return createVector((x * cameraZoom) + renderX, (y * cameraZoom) + renderY);
         },
 
         /**
