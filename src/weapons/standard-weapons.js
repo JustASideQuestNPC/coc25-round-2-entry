@@ -114,8 +114,8 @@ globalThis.WeaponBase = class {
         this.spreadRecovery = spreadRecovery;
         
         // rounds per minute is easier to visualize, but seconds per round makes the math easier
-        this.burstDelay = 1 / fireRate / 60;
-        this.shotDelay = 1 / burstRate / 60;
+        this.burstDelay = 1 / (fireRate / 60);
+        this.shotDelay = 1 / (burstRate / 60);
 
         // setup internal stuff
         this.firingBurst = false;

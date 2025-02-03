@@ -31,8 +31,8 @@ globalThis.WEAPONS = {
             displayName: "Peashooter", // name shown in the ui
             description: "Doesn't actually shoot peas.", // description shown in the ui
             weaponType: "projectile", // "projectile", "hitscan", "explosive", or "special"
-            fireMode: "semi", // "semi" or "full"
-            fireRate: 450, // rounds per minute
+            fireMode: "full", // "semi" or "full"
+            fireRate: 750, // rounds per minute
             burstRate: -1, // rounds per minute
             shotsPerBurst: 1,
             bulletsPerShot: 1,
