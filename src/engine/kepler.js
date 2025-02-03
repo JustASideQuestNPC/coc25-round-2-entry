@@ -92,15 +92,9 @@ var Kepler = (function() {
     function drawEntity(entity) {
         entity.render();
         
-        // only draw the hitbox if the entity has one
-        if (Kepler.SHOW_HITBOXES && typeof entity.bbox === "object") {
-            noFill();
-            stroke(255, 0, 0);
-            strokeWeight(2);
-            rect(
-                entity.bbox.x + 1, entity.bbox.y + 1,
-                entity.bbox.w - 2, entity.bbox.h - 2
-            );
+        // only draw the collider if the entity has one
+        if (Kepler.SHOW_HITBOXES && typeof entity.collider === "object") {
+            entity.collider.render("#ff00ff");
         }
         
         if (Kepler.SHOW_VELOCITY_VECTORS && entity.velocity instanceof p5.Vector) {

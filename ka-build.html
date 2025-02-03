@@ -326,7 +326,7 @@ globalThis.WEAPONS = {
  * Internal class for polygon bounding boxes.
  * @class
  */
-class BoundingBox {
+ class BoundingBox {
     /** @type {number} */
     x;
     /** @type {number} */
@@ -855,6 +855,16 @@ globalThis.PointCollider = class {
             );
         }
     }
+
+    /**
+     * Draws the collider; useful for debugging.
+     * @param {color} color
+     */
+    render(color) {
+        noStroke();
+        fill(color);
+        circle(this.x, this.y, 6);
+    }
 };
 
 /**
@@ -935,6 +945,16 @@ globalThis.LineCollider = class {
                 `LineCollider, CircleCollider, or PolygonCollider; recieved "${typeof other}")`
             );
         }
+    }
+
+    /**
+     * Draws the collider; useful for debugging.
+     * @param {color} color
+     */
+    render(color) {
+        stroke(color);
+        strokeWeight(6);
+        line(this.start.x, this.start.y, this.end.x, this.end.y);
     }
 };
 
@@ -1024,6 +1044,17 @@ globalThis.CircleCollider = class {
                 `LineCollider, CircleCollider, or PolygonCollider; recieved "${typeof other}")`
             );
         }
+    }
+
+    /**
+     * Draws the collider; useful for debugging.
+     * @param {color} color
+     */
+    render(color) {
+        noFill();
+        stroke(color);
+        strokeWeight(6);
+        circle(this.x, this.y, this.radius * 2);
     }
 };
 
@@ -1256,6 +1287,25 @@ globalThis.PolygonCollider = class {
                 `LineCollider, CircleCollider, or PolygonCollider; recieved "${typeof other}")`
             );
         }
+    }
+
+    /**
+     * Draws the collider; useful for debugging.
+     * @param {color} color
+     */
+    render(color) {
+        noFill();
+        stroke(color);
+        
+        strokeWeight(3);
+        rect(this.#bbox.x, this.#bbox.y, this.#bbox.w, this.#bbox.h);
+
+        strokeWeight(6);
+        beginShape();
+        for (const p of this.#points) {
+            vertex(p.x, p.y);
+        }
+        endShape(CLOSE);
     }
 };
 </script>
@@ -2151,6 +2201,10 @@ globalThis.Bullet = class extends Kepler.EntityBase {
     position;
     /** @type {Vector} */
     velocity;
+    /** @type {PointCollider} */
+    collider;
+
+    displayLayer = -1;
 
     /**
      * @param {Vector} position
@@ -2161,10 +2215,25 @@ globalThis.Bullet = class extends Kepler.EntityBase {
 
         this.position = position.copy();
         this.velocity = velocity.copy();
+        this.collider = new PointCollider(position.x, position.y);
     }
 
     update(dt) {
+        // apply delta time and move
         this.position.add(p5.Vector.mult(this.velocity, dt))
+        this.collider.x = this.position.x;
+        this.collider.y = this.position.y;
+
+        // check for collisions
+        const entities = Kepler.getTagged(EntityTag.IS_PLAYER_WEAPON_TARGET);
+        for (const entity of entities) {
+            if (this.collider.isColliding(entity.collider)) {
+                entity.onBulletHit();
+                // delete ourselves and skip the rest of the update
+                this.markForRemove = true;
+                return;
+            }
+        }
     }
 
     render() {
@@ -2183,7 +2252,10 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
     x;
     /** @type {number} */
     y;
+    /** @type {CircleCollider} */
+    collider;
     
+    displayLayer = -5;
     tags = [
         EntityTag.IS_PLAYER_WEAPON_TARGET
     ];
@@ -2196,6 +2268,24 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
         super();
         this.x = x;
         this.y = y;
+        this.collider = new CircleCollider(x, y, 50);
+    }
+
+    render() {
+        const c1 = "#fb3232"
+        const c2 = "#ffffff";
+        let c = c1;
+
+        noStroke();
+        for (let d = 100; d > 0; d -= 20) {
+            fill(c);
+            circle(this.x, this.y, d);
+            c = (c === c1 ? c2 : c1);
+        }
+    }
+
+    onBulletHit() {
+        console.log("static target hit");
     }
 }
 </script>
@@ -2711,13 +2801,22 @@ function setup() {
     // everything else loads
     asyncPreload();
 
+    // debug toggles
+    Kepler.SHOW_HITBOXES = false;
+
     // set up some camera stuff
     Kepler.cameraEnabled = true;
     Kepler.setViewportBounds(0, 0, 1200, 1200);
 
     // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
     Kepler.addEntity(new BackgroundGrid(4, 4));
-    Kepler.addEntity(new Player(300, 300));
+    Kepler.addEntity(new Player(250, 100));
+
+    Kepler.addEntity(new StaticTarget(300, 250));
+    Kepler.addEntity(new StaticTarget(350, 450));
+    Kepler.addEntity(new StaticTarget(400, 650)); 
+
+    Kepler.cameraZoom = 0.75;
 }
 
 /**

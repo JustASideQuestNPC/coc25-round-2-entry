@@ -136,13 +136,22 @@ function setup() {
     // everything else loads
     asyncPreload();
 
+    // debug toggles
+    Kepler.SHOW_HITBOXES = false;
+
     // set up some camera stuff
     Kepler.cameraEnabled = true;
     Kepler.setViewportBounds(0, 0, 1200, 1200);
 
     // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
     Kepler.addEntity(new BackgroundGrid(4, 4));
-    Kepler.addEntity(new Player(300, 300));
+    Kepler.addEntity(new Player(250, 100));
+
+    Kepler.addEntity(new StaticTarget(300, 250));
+    Kepler.addEntity(new StaticTarget(350, 450));
+    Kepler.addEntity(new StaticTarget(400, 650)); 
+
+    Kepler.cameraZoom = 0.75;
 }
 
 /**

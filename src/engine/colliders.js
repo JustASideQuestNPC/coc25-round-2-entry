@@ -533,6 +533,16 @@ globalThis.PointCollider = class {
             );
         }
     }
+
+    /**
+     * Draws the collider; useful for debugging.
+     * @param {color} color
+     */
+    render(color) {
+        noStroke();
+        fill(color);
+        circle(this.x, this.y, 6);
+    }
 };
 
 /**
@@ -613,6 +623,16 @@ globalThis.LineCollider = class {
                 `LineCollider, CircleCollider, or PolygonCollider; recieved "${typeof other}")`
             );
         }
+    }
+
+    /**
+     * Draws the collider; useful for debugging.
+     * @param {color} color
+     */
+    render(color) {
+        stroke(color);
+        strokeWeight(6);
+        line(this.start.x, this.start.y, this.end.x, this.end.y);
     }
 };
 
@@ -702,6 +722,17 @@ globalThis.CircleCollider = class {
                 `LineCollider, CircleCollider, or PolygonCollider; recieved "${typeof other}")`
             );
         }
+    }
+
+    /**
+     * Draws the collider; useful for debugging.
+     * @param {color} color
+     */
+    render(color) {
+        noFill();
+        stroke(color);
+        strokeWeight(6);
+        circle(this.x, this.y, this.radius * 2);
     }
 };
 
@@ -934,5 +965,24 @@ globalThis.PolygonCollider = class {
                 `LineCollider, CircleCollider, or PolygonCollider; recieved "${typeof other}")`
             );
         }
+    }
+
+    /**
+     * Draws the collider; useful for debugging.
+     * @param {color} color
+     */
+    render(color) {
+        noFill();
+        stroke(color);
+        
+        strokeWeight(3);
+        rect(this.#bbox.x, this.#bbox.y, this.#bbox.w, this.#bbox.h);
+
+        strokeWeight(6);
+        beginShape();
+        for (const p of this.#points) {
+            vertex(p.x, p.y);
+        }
+        endShape(CLOSE);
     }
 };

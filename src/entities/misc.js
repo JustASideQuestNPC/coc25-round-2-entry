@@ -50,6 +50,10 @@ globalThis.Bullet = class extends Kepler.EntityBase {
     position;
     /** @type {Vector} */
     velocity;
+    /** @type {PointCollider} */
+    collider;
+
+    displayLayer = -1;
 
     /**
      * @param {Vector} position
@@ -60,10 +64,25 @@ globalThis.Bullet = class extends Kepler.EntityBase {
 
         this.position = position.copy();
         this.velocity = velocity.copy();
+        this.collider = new PointCollider(position.x, position.y);
     }
 
     update(dt) {
+        // apply delta time and move
         this.position.add(p5.Vector.mult(this.velocity, dt))
+        this.collider.x = this.position.x;
+        this.collider.y = this.position.y;
+
+        // check for collisions
+        const entities = Kepler.getTagged(EntityTag.IS_PLAYER_WEAPON_TARGET);
+        for (const entity of entities) {
+            if (this.collider.isColliding(entity.collider)) {
+                entity.onBulletHit();
+                // delete ourselves and skip the rest of the update
+                this.markForRemove = true;
+                return;
+            }
+        }
     }
 
     render() {
@@ -82,7 +101,10 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
     x;
     /** @type {number} */
     y;
+    /** @type {CircleCollider} */
+    collider;
     
+    displayLayer = -5;
     tags = [
         EntityTag.IS_PLAYER_WEAPON_TARGET
     ];
@@ -95,5 +117,23 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
         super();
         this.x = x;
         this.y = y;
+        this.collider = new CircleCollider(x, y, 50);
+    }
+
+    render() {
+        const c1 = "#fb3232"
+        const c2 = "#ffffff";
+        let c = c1;
+
+        noStroke();
+        for (let d = 100; d > 0; d -= 20) {
+            fill(c);
+            circle(this.x, this.y, d);
+            c = (c === c1 ? c2 : c1);
+        }
+    }
+
+    onBulletHit() {
+        console.log("static target hit");
     }
 }
