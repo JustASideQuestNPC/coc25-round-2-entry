@@ -45,8 +45,8 @@ globalThis.SPRITE_DATA = {
             
             // Arcs on side of body
             g.noFill();
-            g.arc(0, -20, 40, 10, 0, 180); // Left
-            g.arc(0, 20, 40, 10, -180, 0); // Right
+            g.arc(0, -20, 40, 10, 0, 3.15); // Left
+            g.arc(0, 20, 40, 10, -3.15, 0); // Right
             
             // Plate line on head
             g.beginShape();
@@ -58,11 +58,11 @@ globalThis.SPRITE_DATA = {
             g.endShape();
             
             // Mouth
-            g.arc(29, 0, 15, 15, 90, -90);
+            g.arc(29, 0, 15, 15, 1.8, -1.8);
             
             // Inside of Mouth
             g.fill("#304250");
-            g.arc(29, 0, 7, 7, 90, -90);
+            g.arc(29, 0, 7, 7, 1.8, -1.8);
             
             // Color of eyes
             g.fill("#81ff4d");
@@ -70,7 +70,7 @@ globalThis.SPRITE_DATA = {
             // His right eye
             g.push();
                 g.translate(13, 12);
-                g.rotate(25);
+                g.rotate(0.5);
                 
                 g.rect(0, 0, 8, 14, 0, 1, 5, 1);
             g.pop();
@@ -78,7 +78,7 @@ globalThis.SPRITE_DATA = {
             // His left eye
             g.push();
                 g.translate(13, -12);
-                g.rotate(-25);
+                g.rotate(-0.5);
                 
                 g.rect(0, 0, 8, 14, 1, 5, 1, 0);
             g.pop();
@@ -107,19 +107,19 @@ globalThis.SPRITE_DATA = {
             g.rect(36, -32, 3, 20); // Thinner
             
             // Bolts on right of head
-            for (var i = 0; i < 12; i++) {
+            for (var i = 0; i < 10; i++) {
                 g.push();
                     g.translate(0, 30);
-                    g.rotate(-67 + i * 12);
+                    g.rotate(5.2 + i * 0.25);
                     g.point(0, -15 - sin(-i * 6 * 3) * 5);
                 g.pop();
             }
             
             // Bolts on left of head
-            for (var i = 0; i < 12; i++) {
+            for (var i = 0; i < 10; i++) {
                 g.push();
                     g.translate(0, -30);
-                    g.rotate(113 + i * 12);
+                    g.rotate(2.05 + i * 0.25);
                     
                     g.point(0, -15 - sin(-i * 6 * 3) * 5);
                     
@@ -137,5 +137,5 @@ globalThis.SPRITE_DATA = {
                 g.line(-5 - i * 7, -2 - i * 2, -5 - i * 7, 2 + i * 2);
             }
         }
-    }
+    },
 };
