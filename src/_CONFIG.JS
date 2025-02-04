@@ -34,7 +34,9 @@ globalThis.WEAPONS = {
         // starter gun
         {
             displayName: "Peashooter", // name shown in the ui
-            description: "Doesn't actually shoot peas.", // description shown in the ui
+            description: (
+                "Doesn't actually shoot peas." // description shown in the ui
+            ),
             weaponType: "hitscan",
             fireMode: "full", // "semi" or "full"
             fireRate: 450, // rounds per minute
@@ -46,9 +48,62 @@ globalThis.WEAPONS = {
             spreadBloom: 2, // degrees
             spreadRecovery: 5, // degrees per second
             maxRange: 750, // units
+        },
+        // secret pistol
+        {
+            displayName: "Marksman",
+            description: (
+                "Infinite ammunition with low damage and rate of fire. Tap reload to throw a " + 
+                "coin, then shoot it for a +RICOSHOT that deals increased damage."
+            ),
+            weaponType: "special",
+            className: "CoinRevolver"
         }
     ],
-    "autoRifles": [],
-    "sniperRifles": [],
-    "explosives": []
+    "autoRifles": [
+        // secret auto rifle
+        {
+            name: "Type-25 Directed Energy Weapon",
+            description: (
+                "High rate of fire that ramps up even higher while firing. Bottomless magazine, " +
+                "but watch out for overheating!"
+            ),
+            weaponType: "special",
+            className: "PlasmaRife"
+        }
+    ],
+    "shotguns": [
+        // secret shotgun
+        {
+            name: "Lucifer's Bane",
+            description: (
+                "Hellishly high damage with an equally high spread. Fires both barrels at once."
+            ),
+            weaponType: "special",
+            className: "SuperShotgun"
+        }
+    ],
+    "sniperRifles": [
+        // secret sniper
+        {
+            name: "Aspect of Zagreus",
+            description: (
+                "Fully automatic with below-average stats. After manually reloading, the first " +
+                "shot has increased range, perfect accuracy, and deals massive damage."
+            ),
+            weaponType: "special",
+            className: "HadesGun"
+        }
+    ],
+    "explosives": [
+        // secret explosive
+        {
+            name: "Sidewinder SMR",
+            description: (
+                "Rapidly fires micro-missiles."
+            ),
+            weaponType: "special",
+            className: "RocketSMG"
+        }
+    ]
 };
