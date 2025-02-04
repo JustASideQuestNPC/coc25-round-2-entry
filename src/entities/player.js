@@ -55,7 +55,11 @@ globalThis.Player = class extends Kepler.EntityBase {
         if (Input.isActive("shoot auto")) {
             this.currentWeapon.fullAutoFire();
         }
-        this.currentWeapon.constantUpdate(dt, this.facingAngle, this.position);
+        // spawn bullets slightly in front of the player
+        this.currentWeapon.constantUpdate(
+            dt, this.facingAngle,
+            p5.Vector.add(p5.Vector.fromAngle(radians(this.facingAngle), 40), this.position)
+        );
 
         // get movement input - doing it this way means that opposite keys cancel each other out
         let moveDir = createVector();
@@ -79,20 +83,6 @@ globalThis.Player = class extends Kepler.EntityBase {
 
     render() {
         this.#sprite.render(this.position, this.facingAngle);
-        
-        // push();
-        // // passing a vector translates to its x and y position
-        // translate(this.position)
-        // rotate(this.facingAngle);
-
-        // stroke("#304250");
-        // strokeWeight(6);
-        // fill("#33aaff");
-
-        // circle(0, 0, 60);
-        // line(0, 0, 30, 0);
-
-        // pop();
     }
 
     onAdd() {
