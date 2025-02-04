@@ -218,16 +218,26 @@ globalThis.WeaponBase = class {
 };
 
 /**
- * Class for weapons that fire projectiles.
+ * A weapon that fires projectiles.
  * @class
  * @extends {WeaponBase}
  */
 globalThis.ProjectileWeapon = class extends WeaponBase {
     /**
-     * Bullet speed in pixels per second.
-     * @param {number}
+     * Bullet speed in units per second.
+     * @type {number}
      */
     shotVelocity;
+    /**
+     * Maximum range of bullets in units.
+     * @type {number}
+     */
+    maxRange;
+    /**
+     * Radius of each bullet's collider in units.
+     * @type {number}
+     */
+    bulletSize;
 
     /**
      * @param {Object} args
@@ -246,19 +256,69 @@ globalThis.ProjectileWeapon = class extends WeaponBase {
      *      in degrees.
      * @param {number} args.spreadRecovery How quickly the spread angle decreases when not firing,
      *      in degrees per second.
-     * @param {number} args.shotVelocity Bullet speed in pixels per second.
+     * @param {number} args.shotVelocity Bullet speed in units per second.
+     * @param {number} args.maxRange Maximum range of bullets in units.
+     * @param {number} args.bulletSize Radius of each bullet's collider in units.
      */
     constructor(args) {
         // set up all the stuff in the base class
         super(args);
 
         this.shotVelocity = args.shotVelocity;
+        this.maxRange = args.maxRange;
+        this.bulletSize = args.bulletSize;
     }
 
     fire(angle, origin) {
         Kepler.addEntity(new Bullet(origin,
             // for some reason, fromAngle ignores angleMode
-            p5.Vector.fromAngle(radians(angle), this.shotVelocity)
+            p5.Vector.fromAngle(radians(angle), this.shotVelocity),
+            this.maxRange, this.bulletSize
         ))
     }
-}
+};
+
+/**
+ * A weapon that instantly hits targets instead of firing projectiles.
+ * @class
+ * @extends {WeaponBase}
+ */
+globalThis.HitscanWeapon = class extends WeaponBase {
+    /**
+     * Maximum range of bullets in units.
+     * @type {number}
+     */
+    maxRange;
+
+    /**
+     * @param {Object} args
+     * @param {"semi"|"full"} args.fireMode Semi-auto: Fires one shot per trigger pull. Full-auto:
+     *      continuously fires as long as the trigger is held down.
+     * @param {number} args.fireRate How quickly bursts are fired, in rounds per minute.
+     * @param {number} args.burstRate How quickly shots are fired within a burst, in rounds per
+     *      minute.
+     * @param {number} args.shotsPerBurst How many shots are fired per burst. Use this for
+     *      burst-fire weapons.
+     * @param {number} args.bulletsPerShot How many bullets or hitscans are fired per shot. Use this
+     *      for shotguns.
+     * @param {number} args.minSpread Minimum spread angle in degrees.
+     * @param {number} args.maxSpread Maximum spread angle in degrees.
+     * @param {number} args.spreadBloom How much the spread angle increases by when a shot is fired,
+     *      in degrees.
+     * @param {number} args.spreadRecovery How quickly the spread angle decreases when not firing,
+     * @param {number} args.maxRange Maximum range of shots in units.
+     */
+    constructor(args) {
+        // set up all the stuff in the base class
+        super(args);
+
+        this.maxRange = args.maxRange;
+    }
+
+    fire(angle, origin) {
+        const rayEnd = p5.Vector.fromAngle(radians(angle), this.maxRange)
+                                .add(origin);
+        // add a visual tracer
+        Kepler.addEntity(new HitscanTracer(origin, rayEnd));
+    }
+};

@@ -2,6 +2,7 @@
 /**
  * A grid in the background to show movement.
  * @class
+ * @extends {Kepler.EntityBase}
  */
 // this is so cursed i love it so much
 globalThis.BackgroundGrid = class extends Kepler.EntityBase {
@@ -44,27 +45,39 @@ globalThis.BackgroundGrid = class extends Kepler.EntityBase {
 /**
  * A bullet fired from a projectile weapon.
  * @class
+ * @extends {Kepler.EntityBase}
  */
 globalThis.Bullet = class extends Kepler.EntityBase {
     /** @type {Vector} */
     position;
     /** @type {Vector} */
+    startPos;
+    /** @type {Vector} */
     velocity;
-    /** @type {PointCollider} */
+    /** @type {number} */
+    maxRange;
+    /** @type {CircleCollider} */
     collider;
+    /** @type {number} */
+    size;
 
-    displayLayer = -1;
+    displayLayer =  10;
 
     /**
      * @param {Vector} position
      * @param {Vector} velocity
+     * @param {number} maxRange
+     * @param {number} size Radius of the bullet's hitbox.
      */
-    constructor(position, velocity) {
+    constructor(position, velocity, maxRange, size) {
         super(); // this does literally nothing but is still required because javascript
 
         this.position = position.copy();
+        this.startPos = position.copy(); // used for range checks
         this.velocity = velocity.copy();
-        this.collider = new PointCollider(position.x, position.y);
+        this.maxRange = maxRange;
+        this.size = size;
+        this.collider = new CircleCollider(position.x, position.y, size);
     }
 
     update(dt) {
@@ -73,8 +86,15 @@ globalThis.Bullet = class extends Kepler.EntityBase {
         this.collider.x = this.position.x;
         this.collider.y = this.position.y;
 
+        // make sure we're not beyond the weapon's range
+        if (this.position.dist(this.startPos) > this.maxRange) {
+            // delete ourselves and sip the rest of the update
+            this.markForRemove = true;
+            return;
+        }
+
         // check for collisions
-        const entities = Kepler.getTagged(EntityTag.IS_PLAYER_WEAPON_TARGET);
+        const entities = Kepler.getTagged("player weapon target");
         for (const entity of entities) {
             if (this.collider.isColliding(entity.collider)) {
                 entity.onBulletHit();
@@ -88,13 +108,59 @@ globalThis.Bullet = class extends Kepler.EntityBase {
     render() {
         noStroke();
         fill("#000000");
-        circle(this.position.x, this.position.y, 8);
+        circle(this.position.x, this.position.y, this.size * 2);
+    }
+}
+
+/**
+ * Visual tracer for hitscan weapons.
+ * @class
+ * @extends {Kepler.EntityBase}
+ */
+globalThis.HitscanTracer = class extends Kepler.EntityBase {
+    /** @type {Vector} */
+    start;
+    /** @type {Vector} */
+    end;
+    /**
+     * How long until the tracer is removed, in seconds. Also determines opacity.
+     * @type {number}
+     */
+    maxLifetime = 0.15;
+    /** @type {number} */
+    lifetime;
+
+    displayLayer = 10;
+
+    /**
+     * @param {Vector} start
+     * @param {Vector} end
+     */
+    constructor(start, end) {
+        super();
+        this.start = start.copy();
+        this.end = end.copy();
+        this.lifetime = this.maxLifetime;
+    }
+
+    update(dt) {
+        this.lifetime -= dt;
+        if (this.lifetime < 0) {
+            this.markForRemove = true;
+        }
+    }
+
+    render() {
+        stroke(247, 153, 38, map(this.lifetime, 0, this.maxLifetime, 0, 255));
+        strokeWeight(6);
+        line(this.start.x, this.start.y, this.end.x, this.end.y);
     }
 }
 
 /**
  * A static target, mainly for debugging.
  * @class
+ * @extends {Kepler.EntityBase}
  */
 globalThis.StaticTarget = class extends Kepler.EntityBase {
     /** @type {number} */
@@ -105,9 +171,7 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
     collider;
     
     displayLayer = -5;
-    tags = [
-        EntityTag.IS_PLAYER_WEAPON_TARGET
-    ];
+    tags = ["player weapon target"];
 
     /**
      * @param {number} x

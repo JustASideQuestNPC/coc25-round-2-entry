@@ -53,8 +53,13 @@ async function asyncPreload() {
         for (const [category, configList] of Object.entries(WEAPONS)) {
             let instances = [];
             for (const weaponConfig of configList) {
-                if (weaponConfig.weaponType === "projectile") {
-                    instances.push(new ProjectileWeapon(weaponConfig));
+                switch (weaponConfig.weaponType) {
+                    case "projectile":
+                        instances.push(new ProjectileWeapon(weaponConfig));
+                        break;
+                    case "hitscan":
+                        instances.push(new HitscanWeapon(weaponConfig));
+                        break;
                 }
             }
             weapons[category] = instances;

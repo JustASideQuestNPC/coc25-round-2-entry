@@ -25,6 +25,11 @@ All the code to make p5js work was written by Bluebird and can be found here: ht
 
 <!-- src/_CONFIGS.js -->
 <script type>
+// SO MANY CONFIG VARIABLES
+// Note: When measuring distance, a "unit" is equal to one pixel when the camera is not zoomed in or
+// out. The camera is zoomed out a little here because the sprites are pretty big, so a unit is
+// between 1/2 and 3/4 of a pixel depending on what I have the zoom set to right now.
+
 /**
  * How long press-type inputs are considered "pressed" for, in seconds. This allows an action to be
  * performed even if the key for it is pressed a bit too early (for example, pressing the jump key
@@ -57,9 +62,9 @@ globalThis.WEAPONS = {
         {
             displayName: "Peashooter", // name shown in the ui
             description: "Doesn't actually shoot peas.", // description shown in the ui
-            weaponType: "projectile", // "projectile", "hitscan", "explosive", or "special"
+            weaponType: "hitscan",
             fireMode: "full", // "semi" or "full"
-            fireRate: 750, // rounds per minute
+            fireRate: 450, // rounds per minute
             burstRate: -1, // rounds per minute
             shotsPerBurst: 1,
             bulletsPerShot: 1,
@@ -67,32 +72,12 @@ globalThis.WEAPONS = {
             maxSpread: 10, // degrees
             spreadBloom: 2, // degrees
             spreadRecovery: 5, // degrees per second
-            shotVelocity: 1200, // pixels per second
+            maxRange: 750, // units
         }
     ],
     "autoRifles": [],
     "sniperRifles": [],
     "explosives": []
-};
-</script>
-<!-- src/ENUMS.js -->
-<script type>
-// this file is for enums, which are collections of discrete values. they're useful if you want to
-// limit a variable to only a few possible values.
-/**
- * All possible entity tags, except the Kepler-specific tags (`Kepler.USES_SCREEN_SPACE_COORDS` and
- * `Kepler.USES_RAW_DELTA_TIME`).
- * @readonly
- * @enum {Symbol}
- */
- globalThis.EntityTag = {
-    // note: Symbol() is an es6 function that returns an object that is guaranteed to only ever be
-    // equal to itself
-    /**
-     * Entities with this tag can be hit by bullets, raycasts, and explosions from the player's
-     * weapons. An entity with this tag must have a collider and an `onBulletHit()` method.
-     */
-    IS_PLAYER_WEAPON_TARGET: Symbol("EntityTag.IS_PLAYER_WEAPON_TARGET"),
 };
 </script>
 <!-- src/assets/sprite-class.js -->
@@ -2153,6 +2138,7 @@ globalThis.Kepler = Kepler;
 /**
  * A grid in the background to show movement.
  * @class
+ * @extends {Kepler.EntityBase}
  */
 // this is so cursed i love it so much
 globalThis.BackgroundGrid = class extends Kepler.EntityBase {
@@ -2195,27 +2181,39 @@ globalThis.BackgroundGrid = class extends Kepler.EntityBase {
 /**
  * A bullet fired from a projectile weapon.
  * @class
+ * @extends {Kepler.EntityBase}
  */
 globalThis.Bullet = class extends Kepler.EntityBase {
     /** @type {Vector} */
     position;
     /** @type {Vector} */
+    startPos;
+    /** @type {Vector} */
     velocity;
-    /** @type {PointCollider} */
+    /** @type {number} */
+    maxRange;
+    /** @type {CircleCollider} */
     collider;
+    /** @type {number} */
+    size;
 
-    displayLayer = -1;
+    displayLayer =  10;
 
     /**
      * @param {Vector} position
      * @param {Vector} velocity
+     * @param {number} maxRange
+     * @param {number} size Radius of the bullet's hitbox.
      */
-    constructor(position, velocity) {
+    constructor(position, velocity, maxRange, size) {
         super(); // this does literally nothing but is still required because javascript
 
         this.position = position.copy();
+        this.startPos = position.copy(); // used for range checks
         this.velocity = velocity.copy();
-        this.collider = new PointCollider(position.x, position.y);
+        this.maxRange = maxRange;
+        this.size = size;
+        this.collider = new CircleCollider(position.x, position.y, size);
     }
 
     update(dt) {
@@ -2224,8 +2222,15 @@ globalThis.Bullet = class extends Kepler.EntityBase {
         this.collider.x = this.position.x;
         this.collider.y = this.position.y;
 
+        // make sure we're not beyond the weapon's range
+        if (this.position.dist(this.startPos) > this.maxRange) {
+            // delete ourselves and sip the rest of the update
+            this.markForRemove = true;
+            return;
+        }
+
         // check for collisions
-        const entities = Kepler.getTagged(EntityTag.IS_PLAYER_WEAPON_TARGET);
+        const entities = Kepler.getTagged("player weapon target");
         for (const entity of entities) {
             if (this.collider.isColliding(entity.collider)) {
                 entity.onBulletHit();
@@ -2239,13 +2244,59 @@ globalThis.Bullet = class extends Kepler.EntityBase {
     render() {
         noStroke();
         fill("#000000");
-        circle(this.position.x, this.position.y, 8);
+        circle(this.position.x, this.position.y, this.size * 2);
+    }
+}
+
+/**
+ * Visual tracer for hitscan weapons.
+ * @class
+ * @extends {Kepler.EntityBase}
+ */
+globalThis.HitscanTracer = class extends Kepler.EntityBase {
+    /** @type {Vector} */
+    start;
+    /** @type {Vector} */
+    end;
+    /**
+     * How long until the tracer is removed, in seconds. Also determines opacity.
+     * @type {number}
+     */
+    maxLifetime = 0.15;
+    /** @type {number} */
+    lifetime;
+
+    displayLayer = 10;
+
+    /**
+     * @param {Vector} start
+     * @param {Vector} end
+     */
+    constructor(start, end) {
+        super();
+        this.start = start.copy();
+        this.end = end.copy();
+        this.lifetime = this.maxLifetime;
+    }
+
+    update(dt) {
+        this.lifetime -= dt;
+        if (this.lifetime < 0) {
+            this.markForRemove = true;
+        }
+    }
+
+    render() {
+        stroke(247, 153, 38, map(this.lifetime, 0, this.maxLifetime, 0, 255));
+        strokeWeight(6);
+        line(this.start.x, this.start.y, this.end.x, this.end.y);
     }
 }
 
 /**
  * A static target, mainly for debugging.
  * @class
+ * @extends {Kepler.EntityBase}
  */
 globalThis.StaticTarget = class extends Kepler.EntityBase {
     /** @type {number} */
@@ -2256,9 +2307,7 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
     collider;
     
     displayLayer = -5;
-    tags = [
-        EntityTag.IS_PLAYER_WEAPON_TARGET
-    ];
+    tags = ["player weapon target"];
 
     /**
      * @param {number} x
@@ -2616,16 +2665,26 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
 };
 
 /**
- * Class for weapons that fire projectiles.
+ * A weapon that fires projectiles.
  * @class
  * @extends {WeaponBase}
  */
 globalThis.ProjectileWeapon = class extends WeaponBase {
     /**
-     * Bullet speed in pixels per second.
-     * @param {number}
+     * Bullet speed in units per second.
+     * @type {number}
      */
     shotVelocity;
+    /**
+     * Maximum range of bullets in units.
+     * @type {number}
+     */
+    maxRange;
+    /**
+     * Radius of each bullet's collider in units.
+     * @type {number}
+     */
+    bulletSize;
 
     /**
      * @param {Object} args
@@ -2644,22 +2703,72 @@ globalThis.ProjectileWeapon = class extends WeaponBase {
      *      in degrees.
      * @param {number} args.spreadRecovery How quickly the spread angle decreases when not firing,
      *      in degrees per second.
-     * @param {number} args.shotVelocity Bullet speed in pixels per second.
+     * @param {number} args.shotVelocity Bullet speed in units per second.
+     * @param {number} args.maxRange Maximum range of bullets in units.
+     * @param {number} args.bulletSize Radius of each bullet's collider in units.
      */
     constructor(args) {
         // set up all the stuff in the base class
         super(args);
 
         this.shotVelocity = args.shotVelocity;
+        this.maxRange = args.maxRange;
+        this.bulletSize = args.bulletSize;
     }
 
     fire(angle, origin) {
         Kepler.addEntity(new Bullet(origin,
             // for some reason, fromAngle ignores angleMode
-            p5.Vector.fromAngle(radians(angle), this.shotVelocity)
+            p5.Vector.fromAngle(radians(angle), this.shotVelocity),
+            this.maxRange, this.bulletSize
         ))
     }
-}
+};
+
+/**
+ * A weapon that instantly hits targets instead of firing projectiles.
+ * @class
+ * @extends {WeaponBase}
+ */
+globalThis.HitscanWeapon = class extends WeaponBase {
+    /**
+     * Maximum range of bullets in units.
+     * @type {number}
+     */
+    maxRange;
+
+    /**
+     * @param {Object} args
+     * @param {"semi"|"full"} args.fireMode Semi-auto: Fires one shot per trigger pull. Full-auto:
+     *      continuously fires as long as the trigger is held down.
+     * @param {number} args.fireRate How quickly bursts are fired, in rounds per minute.
+     * @param {number} args.burstRate How quickly shots are fired within a burst, in rounds per
+     *      minute.
+     * @param {number} args.shotsPerBurst How many shots are fired per burst. Use this for
+     *      burst-fire weapons.
+     * @param {number} args.bulletsPerShot How many bullets or hitscans are fired per shot. Use this
+     *      for shotguns.
+     * @param {number} args.minSpread Minimum spread angle in degrees.
+     * @param {number} args.maxSpread Maximum spread angle in degrees.
+     * @param {number} args.spreadBloom How much the spread angle increases by when a shot is fired,
+     *      in degrees.
+     * @param {number} args.spreadRecovery How quickly the spread angle decreases when not firing,
+     * @param {number} args.maxRange Maximum range of shots in units.
+     */
+    constructor(args) {
+        // set up all the stuff in the base class
+        super(args);
+
+        this.maxRange = args.maxRange;
+    }
+
+    fire(angle, origin) {
+        const rayEnd = p5.Vector.fromAngle(radians(angle), this.maxRange)
+                                .add(origin);
+        // add a visual tracer
+        Kepler.addEntity(new HitscanTracer(origin, rayEnd));
+    }
+};
 </script>
 <!-- src/main.js -->
 <script type>
@@ -2718,8 +2827,13 @@ async function asyncPreload() {
         for (const [category, configList] of Object.entries(WEAPONS)) {
             let instances = [];
             for (const weaponConfig of configList) {
-                if (weaponConfig.weaponType === "projectile") {
-                    instances.push(new ProjectileWeapon(weaponConfig));
+                switch (weaponConfig.weaponType) {
+                    case "projectile":
+                        instances.push(new ProjectileWeapon(weaponConfig));
+                        break;
+                    case "hitscan":
+                        instances.push(new HitscanWeapon(weaponConfig));
+                        break;
                 }
             }
             weapons[category] = instances;
