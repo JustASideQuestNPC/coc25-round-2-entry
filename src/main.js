@@ -152,9 +152,9 @@ function setup() {
     Kepler.addEntity(new BackgroundGrid(4, 4));
     Kepler.addEntity(new Player(250, 100));
 
-    Kepler.addEntity(new StaticTarget(300, 250));
-    Kepler.addEntity(new StaticTarget(350, 450));
-    Kepler.addEntity(new StaticTarget(400, 650)); 
+    Kepler.addEntity(new StaticTarget(300, 250, 0));
+    Kepler.addEntity(new StaticTarget(350, 450, 1));
+    Kepler.addEntity(new StaticTarget(400, 650, 2)); 
 
     Kepler.cameraZoom = 0.75;
 }

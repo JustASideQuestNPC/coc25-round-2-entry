@@ -163,12 +163,12 @@ globalThis.HitscanTracer = class extends Kepler.EntityBase {
  * @extends {Kepler.EntityBase}
  */
 globalThis.StaticTarget = class extends Kepler.EntityBase {
-    /** @type {number} */
-    x;
-    /** @type {number} */
-    y;
+    /** @type {Vector} */
+    position;
     /** @type {CircleCollider} */
     collider;
+    /** @type {number} */
+    testIndex;
     
     displayLayer = -5;
     tags = ["player weapon target"];
@@ -176,12 +176,13 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
     /**
      * @param {number} x
      * @param {number} y
+     * @param {number} testIndex
      */
-    constructor(x, y) {
+    constructor(x, y, testIndex) {
         super();
-        this.x = x;
-        this.y = y;
+        this.position = createVector(x, y);
         this.collider = new CircleCollider(x, y, 50);
+        this.testIndex = testIndex;
     }
 
     render() {
@@ -192,12 +193,12 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
         noStroke();
         for (let d = 100; d > 0; d -= 20) {
             fill(c);
-            circle(this.x, this.y, d);
+            circle(this.position.x, this.position.y, d);
             c = (c === c1 ? c2 : c1);
         }
     }
 
     onBulletHit() {
-        console.log("static target hit");
+        console.log(`target ${this.testIndex} hit`);
     }
 }

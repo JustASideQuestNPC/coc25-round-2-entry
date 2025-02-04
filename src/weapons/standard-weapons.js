@@ -291,6 +291,12 @@ globalThis.HitscanWeapon = class extends WeaponBase {
     maxRange;
 
     /**
+     * How many targets the shot can pierce.
+     * @type {number}
+     */
+    maxPierce;
+
+    /**
      * @param {Object} args
      * @param {"semi"|"full"} args.fireMode Semi-auto: Fires one shot per trigger pull. Full-auto:
      *      continuously fires as long as the trigger is held down.
@@ -307,12 +313,15 @@ globalThis.HitscanWeapon = class extends WeaponBase {
      *      in degrees.
      * @param {number} args.spreadRecovery How quickly the spread angle decreases when not firing,
      * @param {number} args.maxRange Maximum range of shots in units.
+     * @param {number} [args.maxPierce=1] How many targets the shot can pierce.
      */
     constructor(args) {
         // set up all the stuff in the base class
         super(args);
 
         this.maxRange = args.maxRange;
+        // default parameters
+        this.maxPierce = args.maxPierce ?? 1;
     }
 
     fire(angle, origin) {
@@ -320,5 +329,38 @@ globalThis.HitscanWeapon = class extends WeaponBase {
                                 .add(origin);
         // add a visual tracer
         Kepler.addEntity(new HitscanTracer(origin, rayEnd));
+
+        // construct a line collider and run hitscans
+        const ray = new LineCollider(origin, rayEnd);
+
+        // fun fact: i originally called this "targetsHit", but i accidentally capitalized the s,
+        // didn't notice for a day, and then decided that i probably shouldn't use that name.
+        let targets = [];
+
+        // get every entity that's colliding with the ray
+        const entities = Kepler.getTagged("player weapon target");
+        for (const entity of entities) {
+            if (ray.isColliding(entity.collider)) {
+                targets.push(entity);
+            }
+        }
+
+        // figure out which entities to actually hit
+        if (targets.length > 0) {
+            // unlike the p5js map(), Array.map() creates a new array by running a callback function
+            // on each item in another array. in this case, we use it to store the distance from the
+            // origin to each entity and save a bunch of square root operations when we sort. this
+            // is probably overly complicated and completely necessary, but it's fun so it stays.
+            targets = targets.map((e) => [origin.dist(e.position), e])
+                              // caching the distance means our sort function is simpler and faster
+                             .sort((a, b) => a[0] - b[0])
+                              // re-map back to an array of just entities
+                             .map((e) => e[1]);
+
+            // only hit as many targets as we can pierce
+            for (let i = 0; i < targets.length && i < this.maxPierce; ++i) {
+                targets[i].onBulletHit();
+            }
+        }
     }
 };
