@@ -22,7 +22,8 @@ globalThis.KEYBINDS = {
     "move down": ["s", "ArrowDown"],
     "move left": ["a", "ArrowLeft"],
     "move right": ["d", "ArrowRight"],
-    "shoot": ["left mouse"]
+    "shoot": ["left mouse"],
+    "reload": ["r"]
 };
 
 /**
@@ -47,6 +48,8 @@ globalThis.WEAPONS = {
             maxSpread: 10, // degrees
             spreadBloom: 2, // degrees
             spreadRecovery: 5, // degrees per second
+            magazineSize: 10,
+            reloadDuration: 1.5,
             maxRange: 750, // units
         },
         // secret pistol

@@ -55,6 +55,9 @@ globalThis.Player = class extends Kepler.EntityBase {
         if (Input.isActive("shoot auto")) {
             this.currentWeapon.fullAutoFire();
         }
+        if (Input.isActive("reload")) {
+            this.currentWeapon.reload();
+        }
         // spawn bullets slightly in front of the player
         this.currentWeapon.constantUpdate(
             dt, this.facingAngle,

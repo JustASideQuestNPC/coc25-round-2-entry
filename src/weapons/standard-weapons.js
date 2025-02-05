@@ -56,10 +56,28 @@ globalThis.WeaponBase = class {
     spreadRecovery;
 
     /**
+     * The weapon's magazine size.
+     * @type {number}
+     */
+    magazineSize;
+
+    /**
+     * How long the weapon takes to reload, in seconds.
+     * @type {number}
+     */
+    reloadDuration;
+
+    /**
      * Whether the weapon is currently firing a burst.
      * @type {boolean}
      */
     firingBurst;
+
+    /**
+     * Whether the weapon is currently reloading.
+     * @type {boolean}
+     */
+    reloading;
 
     /**
      * Remaining delay between bursts.
@@ -74,6 +92,12 @@ globalThis.WeaponBase = class {
     shotTimer;
 
     /**
+     * Remaining delay in a reload.
+     * @type {number}
+     */
+    reloadTimer;
+
+    /**
      * How many shots are left in the current burst.
      * @type {number}
      */
@@ -84,6 +108,12 @@ globalThis.WeaponBase = class {
      * @type {number}
      */
     spreadAngle;
+
+    /**
+     * How many rounds are left in the magazine.
+     * @type {number}
+     */
+    remainingAmmo;
 
     /**
      * @param {Object} args
@@ -102,9 +132,11 @@ globalThis.WeaponBase = class {
      *      in degrees.
      * @param {number} args.spreadRecovery How quickly the spread angle decreases when not firing,
      *      in degrees per second.
+     * @param {number} args.magazineSize The weapon's magazine size.
+     * @param {number} args.reloadDuration How long the weapon takes to reload, in seconds.
      */
     constructor({ fireMode, fireRate, burstRate, shotsPerBurst, bulletsPerShot, minSpread,
-                  maxSpread, spreadBloom, spreadRecovery }) {
+                  maxSpread, spreadBloom, spreadRecovery, magazineSize, reloadDuration }) {
         this.fireMode = fireMode;
         this.shotsPerBurst = shotsPerBurst;
         this.bulletsPerShot = bulletsPerShot;
@@ -112,6 +144,8 @@ globalThis.WeaponBase = class {
         this.maxSpread = maxSpread;
         this.spreadBloom = spreadBloom;
         this.spreadRecovery = spreadRecovery;
+        this.maxAmmo = magazineSize;
+        this.reloadDuration = reloadDuration;
         
         // rounds per minute is easier to visualize, but seconds per round makes the math easier
         this.burstDelay = 1 / (fireRate / 60);
@@ -119,10 +153,13 @@ globalThis.WeaponBase = class {
 
         // setup internal stuff
         this.firingBurst = false;
+        this.reloading = false;
         this.burstTimer = 0;
         this.shotTimer = 0;
+        this.reloadTimer = 0;
         this.burstShotsRemaining = 0;
         this.spreadAngle = minSpread;
+        this.remainingAmmo = this.maxAmmo;
     }
 
     /**
@@ -132,13 +169,21 @@ globalThis.WeaponBase = class {
         // never do anything if this is a full-auto weapon
         if (this.fireMode !== "semi") { return; }
 
-        // make sure we're not already firing, and we're not waiting for a delay to timeout
-        if (!this.firingBurst && this.burstTimer <= 0) {
-            this.firingBurst = true;
-            this.burstShotsRemaining = this.shotsPerBurst;
+        // make sure we're not already firing or reloading, and we're not waiting for a delay to
+        // timeout
+        if (!this.firingBurst && !this.reloading && this.burstTimer <= 0) {
+            // start reloading if we're out of ammo
+            if (this.remainingAmmo <= 0) {
+                this.reloading = true;
+                this.reloadTimer = this.reloadDuration;
+            }
+            else {
+                this.firingBurst = true;
+                this.burstShotsRemaining = this.shotsPerBurst;
 
-            // ensures we fire on the next update
-            this.shotTimer = 0;
+                // ensures we fire on the next update
+                this.shotTimer = 0;
+            }
         }
     }
 
@@ -149,13 +194,32 @@ globalThis.WeaponBase = class {
         // never do anything if this is a semi-auto weapon
         if (this.fireMode !== "full") { return; }
 
-        // make sure we're not already firing, and we're not waiting for a delay to timeout
-        if (!this.firingBurst && this.burstTimer <= 0) {
-            this.firingBurst = true;
-            this.burstShotsRemaining = this.shotsPerBurst;
+        // make sure we're not already firing or reloading, and we're not waiting for a delay to
+        // timeout
+        if (!this.firingBurst && !this.reloading && this.burstTimer <= 0) {
+            // start reloading if we're out of ammo
+            if (this.remainingAmmo <= 0) {
+                this.reloading = true;
+                this.reloadTimer = this.reloadDuration;
+            }
+            else {
+                this.firingBurst = true;
+                this.burstShotsRemaining = this.shotsPerBurst;
 
-            // ensures we fire on the next update
-            this.shotTimer = 0;
+                // ensures we fire on the next update
+                this.shotTimer = 0;
+            }
+        }
+    }
+
+    /**
+     * Called once when the reload button is pressed.
+     */
+    reload() {
+        if (!this.reloading) {
+            this.firingBurst = false;
+            this.reloading = true;
+            this.reloadTimer = this.reloadDuration;
         }
     }
 
@@ -168,7 +232,18 @@ globalThis.WeaponBase = class {
     constantUpdate(dt, aimAngle, origin) {
         let applySpreadRecovery = true;
 
-        if (this.firingBurst) {
+        if (this.reloading) {
+            // reset the burst and shot timers so we can fire immediately after the reload
+            this.burstTimer = 0;
+            this.shotTimer = 0;
+
+            this.reloadTimer -= dt;
+            if (this.reloadTimer <= 0) {
+                this.remainingAmmo = this.maxAmmo;
+                this.reloading = false;
+            }
+        }
+        else if (this.firingBurst) {
             // fire bullets if we can
             if (this.shotTimer <= 0) {
                 // find which angles to fire bullets at
@@ -189,6 +264,12 @@ globalThis.WeaponBase = class {
                 }
                 else {
                     this.burstTimer = this.burstDelay;
+                    this.firingBurst = false;
+                }
+
+                // update ammo count and reload
+                --this.remainingAmmo;
+                if (this.remainingAmmo <= 0) {
                     this.firingBurst = false;
                 }
             }
@@ -256,6 +337,8 @@ globalThis.ProjectileWeapon = class extends WeaponBase {
      *      in degrees.
      * @param {number} args.spreadRecovery How quickly the spread angle decreases when not firing,
      *      in degrees per second.
+     * @param {number} args.magazineSize The weapon's magazine size.
+     * @param {number} args.reloadDuration How long the weapon takes to reload, in seconds.
      * @param {number} args.shotVelocity Bullet speed in units per second.
      * @param {number} args.maxRange Maximum range of bullets in units.
      * @param {number} args.bulletSize Radius of each bullet's collider in units.
@@ -312,6 +395,8 @@ globalThis.HitscanWeapon = class extends WeaponBase {
      * @param {number} args.spreadBloom How much the spread angle increases by when a shot is fired,
      *      in degrees.
      * @param {number} args.spreadRecovery How quickly the spread angle decreases when not firing,
+     * @param {number} args.magazineSize The weapon's magazine size.
+     * @param {number} args.reloadDuration How long the weapon takes to reload, in seconds.
      * @param {number} args.maxRange Maximum range of shots in units.
      * @param {number} [args.maxPierce=1] How many targets the shot can pierce.
      */

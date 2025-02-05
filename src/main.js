@@ -88,6 +88,12 @@ async function asyncPreload() {
         // for performance timing
         const loadStart = window.performance.now();
 
+        /**
+         * Which actions should be press-type actions.
+         * @type {string[]}
+         */
+        const pressActions = ["reload"];
+
         for (const [bindName, bindKeys] of Object.entries(KEYBINDS)) {
             // having two keybinds for shooting makes some things easier
             if (bindName === "shoot") {
@@ -105,7 +111,8 @@ async function asyncPreload() {
             else {
                 Input.addAction({
                     name: bindName,
-                    keys: bindKeys
+                    keys: bindKeys,
+                    type: pressActions.includes(bindName) ? "press" : "hold"
                 });
             }
         }
