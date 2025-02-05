@@ -34,7 +34,7 @@ globalThis.WEAPONS = {
     "pistols": [
         // starter gun
         {
-            displayName: "Peashooter", // name shown in the ui
+            name: "Peashooter", // name shown in the ui
             description: (
                 "Doesn't actually shoot peas." // description shown in the ui
             ),
@@ -54,7 +54,7 @@ globalThis.WEAPONS = {
         },
         // secret pistol
         {
-            displayName: "Marksman",
+            name: "Marksman",
             description: (
                 "Infinite ammunition with low damage and rate of fire. Tap reload to throw a " + 
                 "coin, then shoot it for a +RICOSHOT that deals increased damage."

@@ -13,6 +13,9 @@ globalThis.GameState = (function() {
 
             background("#ffffff");
             Kepler.render();
+
+            // draw the HUD
+            
         },
     };
 

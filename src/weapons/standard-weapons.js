@@ -14,6 +14,12 @@ globalThis.WeaponBase = class {
     shotsPerBurst;
 
     /**
+     * The name of the weapon. Used by the HUD.
+     * @type {string}
+     */
+    name;
+
+    /**
      * Time between each shot in a burst, in seconds.
      * @type {number}
      */
@@ -117,6 +123,7 @@ globalThis.WeaponBase = class {
 
     /**
      * @param {Object} args
+     * @param {string} name The name of the weapon
      * @param {"semi"|"full"} args.fireMode Semi-auto: Fires one shot per trigger pull. Full-auto:
      *      continuously fires as long as the trigger is held down.
      * @param {number} args.fireRate How quickly bursts are fired, in rounds per minute.
@@ -135,8 +142,9 @@ globalThis.WeaponBase = class {
      * @param {number} args.magazineSize The weapon's magazine size.
      * @param {number} args.reloadDuration How long the weapon takes to reload, in seconds.
      */
-    constructor({ fireMode, fireRate, burstRate, shotsPerBurst, bulletsPerShot, minSpread,
+    constructor({ name, fireMode, fireRate, burstRate, shotsPerBurst, bulletsPerShot, minSpread,
                   maxSpread, spreadBloom, spreadRecovery, magazineSize, reloadDuration }) {
+        this.name = name;
         this.fireMode = fireMode;
         this.shotsPerBurst = shotsPerBurst;
         this.bulletsPerShot = bulletsPerShot;
@@ -322,6 +330,7 @@ globalThis.ProjectileWeapon = class extends WeaponBase {
 
     /**
      * @param {Object} args
+     * @param {string} name The name of the weapon
      * @param {"semi"|"full"} args.fireMode Semi-auto: Fires one shot per trigger pull. Full-auto:
      *      continuously fires as long as the trigger is held down.
      * @param {number} args.fireRate How quickly bursts are fired, in rounds per minute.
@@ -381,6 +390,7 @@ globalThis.HitscanWeapon = class extends WeaponBase {
 
     /**
      * @param {Object} args
+     * @param {string} name The name of the weapon
      * @param {"semi"|"full"} args.fireMode Semi-auto: Fires one shot per trigger pull. Full-auto:
      *      continuously fires as long as the trigger is held down.
      * @param {number} args.fireRate How quickly bursts are fired, in rounds per minute.
