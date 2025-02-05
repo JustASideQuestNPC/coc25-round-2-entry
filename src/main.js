@@ -12,6 +12,18 @@ globalThis.weapons = {};
 globalThis.sprites = {};
 
 /**
+ * Global reference to the player.
+ * @type {Player}
+ */
+globalThis.player;
+
+/**
+ * Functions for running each game state.
+ * @type {Object<string, ()=>void>}
+ */
+globalThis.gameStateFunctions;
+
+/**
  * Whether async loading is complete. If this is false, lots of things are probably undefined!
  * @type {boolean}
  */
@@ -104,7 +116,7 @@ async function asyncPreload() {
         resolve();
     });
 
-    // now that we've spawned both promises, we wait for them to both finish - this will stop the
+    // now that we've spawned each promises, we wait for them to both finish - this will stop the
     // code in this function from running, but the code outside of it will still keep going
     await loadSprites;
     await loadWeapons;
@@ -157,6 +169,8 @@ function setup() {
     Kepler.addEntity(new StaticTarget(400, 650, 2)); 
 
     Kepler.cameraZoom = 0.75;
+
+    GameState.changeState("gameplay");
 }
 
 /**
@@ -172,11 +186,7 @@ function draw() {
         return;
     }
 
-    Input.update();
-    Kepler.update();
-
-    background("#ffffff");
-    Kepler.render();
+    GameState.runState();
 }
 
 /**

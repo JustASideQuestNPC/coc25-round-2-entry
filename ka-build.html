@@ -2803,6 +2803,67 @@ globalThis.HitscanWeapon = class extends WeaponBase {
     }
 };
 </script>
+<!-- src/game-states.js -->
+<script type>
+/**
+ * Manages game states.
+ */
+globalThis.GameState = (function() {
+    /**
+     * Functions for each game state
+     * @type {Object<string, ()=>void>}
+     */
+    const GAME_STATE_FUNCTIONS = {
+        "gameplay": () => {
+            Input.update();
+            Kepler.update();
+
+            background("#ffffff");
+            Kepler.render();
+        },
+    };
+
+    /**
+     * Internal variable for the current game state.
+     * @type {string}
+     */
+    let _currentState = "none";
+
+    return {
+        runState() {
+            // error checking
+            if (typeof GAME_STATE_FUNCTIONS[_currentState] === undefined) {
+                throw new TypeError(
+                    `The game state "${_currentState}" does not have an associated function!`
+                )
+            }
+            GAME_STATE_FUNCTIONS[_currentState]();
+        },
+
+        /**
+         * Transitions to a new game state.
+         * @param {string} newState
+         */
+        changeState(newState) {
+            // error checking
+            if (!Object.hasOwn(GAME_STATE_FUNCTIONS, newState)) {
+                throw new TypeError(`"${newState}" is not a valid game state!`);
+            }
+
+            _currentState = newState;
+        },
+
+        /**
+         * The current game state. Read-only.
+         * @type {string}
+         */
+        get currentState() { return _currentState; },
+        set currentState(x) {
+            throw new TypeError("GameState.currentState is read-only!");
+        }
+    };
+})();
+</script>
 <!-- src/main.js -->
 <script type>
 // all the global variables that don't fit into another file
@@ -2817,6 +2878,18 @@ globalThis.HitscanWeapon = class extends WeaponBase {
  * @type {Object<string, Sprite>}
  */
 globalThis.sprites = {};
+
+/**
+ * Global reference to the player.
+ * @type {Player}
+ */
+globalThis.player;
+
+/**
+ * Functions for running each game state.
+ * @type {Object<string, ()=>void>}
+ */
+globalThis.gameStateFunctions;
 
 /**
  * Whether async loading is complete. If this is false, lots of things are probably undefined!
@@ -2911,7 +2984,7 @@ async function asyncPreload() {
         resolve();
     });
 
-    // now that we've spawned both promises, we wait for them to both finish - this will stop the
+    // now that we've spawned each promises, we wait for them to both finish - this will stop the
     // code in this function from running, but the code outside of it will still keep going
     await loadSprites;
     await loadWeapons;
@@ -2964,6 +3037,8 @@ function setup() {
     Kepler.addEntity(new StaticTarget(400, 650, 2)); 
 
     Kepler.cameraZoom = 0.75;
+
+    GameState.changeState("gameplay");
 }
 
 /**
@@ -2979,11 +3054,7 @@ function draw() {
         return;
     }
 
-    Input.update();
-    Kepler.update();
-
-    background("#ffffff");
-    Kepler.render();
+    GameState.runState();
 }
 
 /**
