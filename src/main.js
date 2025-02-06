@@ -139,7 +139,7 @@ async function asyncPreload() {
  * Runs once when the program starts.
  */
 function setup() {
-    // weird funky html stuff - createCanvas() returns a reference to the canvas, but its a
+    // weird funky html stuff - createCanvas() returns a reference to the canvas, but it's a
     // p5.Element instance and we need an HTMLElement instance so we can add event listeners to it
     const c = createCanvas(600, 600);
     const canvas = document.getElementById(c.id());

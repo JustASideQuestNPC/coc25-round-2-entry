@@ -72,7 +72,7 @@ globalThis.WEAPONS = {
     "autoRifles": [
         // secret auto rifle
         {
-            name: "Type-25 Directed Energy Weapon",
+            name: "Plasma Rifle",
             description: (
                 "High rate of fire that ramps up even higher while firing. Bottomless magazine, " +
                 "but watch out for overheating!"
