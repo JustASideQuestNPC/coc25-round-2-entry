@@ -14,6 +14,12 @@
 globalThis.INPUT_BUFFER_DURATION = 0.15;
 
 /**
+ * How much health the player spawns with.
+ * @type {number}
+ */
+globalThis.PLAYER_MAX_HEALTH = 100;
+
+/**
  * Keybinds for all inputs.
  * @type {Object<string, string[]>}
  */

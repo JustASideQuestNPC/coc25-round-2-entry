@@ -169,7 +169,10 @@ function setup() {
 
     // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
     Kepler.addEntity(new BackgroundGrid(4, 4));
-    Kepler.addEntity(new Player(250, 100));
+
+    // Kepler.addEntity() returns a reference to the entity, so we can store things like the player
+    // in a variable for easy access.
+    player = Kepler.addEntity(new Player(250, 100));
 
     Kepler.addEntity(new StaticTarget(300, 250, 0));
     Kepler.addEntity(new StaticTarget(350, 450, 1));

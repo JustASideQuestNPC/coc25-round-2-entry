@@ -65,7 +65,7 @@ globalThis.WeaponBase = class {
      * The weapon's magazine size.
      * @type {number}
      */
-    magazineSize;
+    maxAmmo;
 
     /**
      * How long the weapon takes to reload, in seconds.

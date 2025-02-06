@@ -14,6 +14,12 @@ globalThis.Player = class extends Kepler.EntityBase {
     /** @type {number} */
     facingAngle;
 
+    /** @type {number} */
+    maxHealth;
+
+    /** @type {number} */
+    currentHealth;
+
     /**
      * The currently equipped weapon.
      * @type {WeaponBase}
@@ -39,6 +45,10 @@ globalThis.Player = class extends Kepler.EntityBase {
 
         // this is currently hard-coded for testing but it will be changed later
         this.currentWeapon = weapons.pistols[0];
+
+        this.maxHealth = PLAYER_MAX_HEALTH;
+        // health is currently set to 50% for testing
+        this.currentHealth = this.maxHealth / 2;
     }
 
     update(dt) {

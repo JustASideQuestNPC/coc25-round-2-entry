@@ -15,7 +15,13 @@ globalThis.GameState = (function() {
             Kepler.render();
 
             // draw the HUD
-            
+            // important variables:
+            // how much ammo the player's gun has left: player.currentWeapon.remainingAmmo
+            // how much ammo the player's gun can hold: player.currentWeapon.maxAmmo;
+            // the player's maximum health: player.maxHealth
+            // the player's current health: player.currentHealth
+            // note: the player's current health is being set to 50% of their max health right now
+            // go to the Player constructor to change it
         },
     };
 
