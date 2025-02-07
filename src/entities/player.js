@@ -102,4 +102,12 @@ globalThis.Player = class extends Kepler.EntityBase {
         // snap the camera to our position at the start
         Kepler.setCameraPosition(this.position);
     }
+
+    /**
+     * Called once whenever the player takes damage.
+     * @param {number} damage
+     */
+    takeDamage(damage) {
+        console.log(`took ${damage} damage`);
+    }
 }

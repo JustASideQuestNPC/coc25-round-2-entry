@@ -366,7 +366,7 @@ globalThis.ProjectileWeapon = class extends WeaponBase {
             // for some reason, fromAngle ignores angleMode
             p5.Vector.fromAngle(radians(angle), this.shotVelocity),
             this.maxRange, this.bulletSize
-        ))
+        ));
     }
 };
 

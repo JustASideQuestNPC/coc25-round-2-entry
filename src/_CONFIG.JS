@@ -113,9 +113,21 @@ globalThis.GUNNER_ENEMY_MOVE_SPEED = 300;
 globalThis.GUNNER_ENEMY_TURN_SPEED = 90; // degrees per second
 /**
  * Gunner enemies want to be this distance from the player.
- * @param {number}
+ * @type {number}
  */
 globalThis.GUNNER_ENEMY_TARGET_DISTANCE = 400;
+/** @type {number} */
+globalThis.GUNNER_ENEMY_BULLET_DAMAGE = 2;
+/** @type {number} */
+globalThis.GUNNER_ENEMY_BULLET_SPEED = 750;
+/** @type {number} */
+globalThis.GUNNER_ENEMY_BULLET_RANGE = 550;
+/** @type {number} */
+globalThis.GUNNER_ENEMY_RATE_OF_FIRE = 450; // rounds per minute
+/** @type {number} */
+globalThis.GUNNER_ENEMY_MAGAZINE_SIZE = 10;
+/** @type {number} */
+globalThis.GUNNER_ENEMY_RELOAD_TIME = 2.0; // seconds
 
 /**
  * How long press-type inputs are considered "pressed" for, in seconds. This allows an action to be

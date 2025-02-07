@@ -68,6 +68,7 @@ globalThis.Bullet = class extends Kepler.EntityBase {
      * @param {Vector} velocity
      * @param {number} maxRange
      * @param {number} size Radius of the bullet's hitbox.
+     * @param {boolean} [firedByEnemy=false] Whether an enemy fired the bullet.
      */
     constructor(position, velocity, maxRange, size) {
         super(); // this does literally nothing but is still required because javascript

@@ -29,6 +29,16 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
     /** @type {number} */
     facingAngle;
 
+    /** @type {number} */
+    currentAmmo;
+    /** @type {number} */
+    shotTimer;
+    /** @type {number} */
+    reloadTimer;
+    /** @type {boolean} */
+    reloading;
+    /** @type {boolean} */
+    firing;
 
     /**
      * @param {number} x
@@ -44,6 +54,11 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
 
         this.position = createVector(x, y);
         this.facingAngle = 0;
+        this.currentAmmo = GUNNER_ENEMY_MAGAZINE_SIZE;
+        this.shotTimer = 0;
+        this.reloadTimer = 0;
+        this.reloading = false;
+        this.firing = false;
 
         this.#sprite = sprites.gunnerEnemy;
     }
@@ -77,6 +92,20 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
             this.position.add(
                 p5.Vector.fromAngle(radians(this.facingAngle), -GUNNER_ENEMY_MOVE_SPEED * dt)
             );
+        }
+
+        // shoot or reload
+        if (this.firing) {
+            this.shotTimer -= dt;
+            if (this.shotTimer <= 0) {
+                z
+                --this.currentAmmo;
+                if (this.currentAmmo === 0) {
+                    this.firing = false;
+                    this.reloading = true;
+                    this.reloadTimer = GUNNER_ENEMY_RELOAD_TIME;
+                }
+            }
         }
     }
 };

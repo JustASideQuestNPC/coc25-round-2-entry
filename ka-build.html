@@ -2805,6 +2805,16 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
     /** @type {number} */
     facingAngle;
 
+    /** @type {number} */
+    currentAmmo;
+    /** @type {number} */
+    shotTimer;
+    /** @type {number} */
+    reloadTimer;
+    /** @type {boolean} */
+    reloading;
+    /** @type {boolean} */
+    firing;
 
     /**
      * @param {number} x
@@ -2820,6 +2830,11 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
 
         this.position = createVector(x, y);
         this.facingAngle = 0;
+        this.currentAmmo = GUNNER_ENEMY_MAGAZINE_SIZE;
+        this.shotTimer = 0;
+        this.reloadTimer = 0;
+        this.reloading = false;
+        this.firing = false;
 
         this.#sprite = sprites.gunnerEnemy;
     }
@@ -2853,6 +2868,20 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
             this.position.add(
                 p5.Vector.fromAngle(radians(this.facingAngle), -GUNNER_ENEMY_MOVE_SPEED * dt)
             );
+        }
+
+        // shoot or reload
+        if (this.firing) {
+            this.shotTimer -= dt;
+            if (this.shotTimer <= 0) {
+                
+                --this.currentAmmo;
+                if (this.currentAmmo === 0) {
+                    this.firing = false;
+                    this.reloading = true;
+                    this.reloadTimer = GUNNER_ENEMY_RELOAD_TIME;
+                }
+            }
         }
     }
 };
@@ -2967,6 +2996,7 @@ globalThis.Bullet = class extends Kepler.EntityBase {
      * @param {Vector} velocity
      * @param {number} maxRange
      * @param {number} size Radius of the bullet's hitbox.
+     * @param {boolean} [firedByEnemy=false] Whether an enemy fired the bullet.
      */
     constructor(position, velocity, maxRange, size) {
         super(); // this does literally nothing but is still required because javascript
@@ -3207,6 +3237,14 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
     onAdd() {
         // snap the camera to our position at the start
         Kepler.setCameraPosition(this.position);
+    }
+
+    /**
+     * Called once whenever the player takes damage.
+     * @param {number} damage
+     */
+    takeDamage(damage) {
+        console.log(`took ${damage} damage`);
     }
 }
 </script>
@@ -3580,7 +3618,7 @@ globalThis.ProjectileWeapon = class extends WeaponBase {
             // for some reason, fromAngle ignores angleMode
             p5.Vector.fromAngle(radians(angle), this.shotVelocity),
             this.maxRange, this.bulletSize
-        ))
+        ));
     }
 };
 
