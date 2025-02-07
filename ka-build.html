@@ -35,25 +35,10 @@ All the code to make p5js work was written by Bluebird and can be found here: ht
 // between 1/2 and 3/4 of a pixel depending on what I have the zoom set to right now.
 
 /**
- * How long press-type inputs are considered "pressed" for, in seconds. This allows an action to be
- * performed even if the key for it is pressed a bit too early (for example, pressing the jump key
- * just before you hit the ground will still make you jump after you hit the ground). This can make
- * controls feel much better, assuming your code is set up to correctly use the buffer.
- * @type {number}
- */
-// note: attaching a variable to "globalThis" allows it to be accessible in other files
-globalThis.INPUT_BUFFER_DURATION = 0.15;
-
-/**
- * How much health the player spawns with.
- * @type {number}
- */
-globalThis.PLAYER_MAX_HEALTH = 100;
-
-/**
  * Keybinds for all inputs.
  * @type {Object<string, string[]>}
  */
+// note: attaching a variable to "globalThis" allows it to be accessible in other files
 globalThis.KEYBINDS = {
     "move up": ["w", "ArrowUp"],
     "move down": ["s", "ArrowDown"],
@@ -147,6 +132,30 @@ globalThis.WEAPONS = {
         }
     ]
 };
+
+/** @type {number} */
+globalThis.PLAYER_MAX_HEALTH = 100;
+/** @type {number} */
+globalThis.PLAYER_MOVE_SPEED = 400;
+
+/** @type {number} */
+globalThis.GUNNER_ENEMY_MOVE_SPEED = 300;
+/** @type {number} */
+globalThis.GUNNER_ENEMY_TURN_SPEED = 90; // degrees per second
+/**
+ * Gunner enemies want to be this distance from the player.
+ * @param {number}
+ */
+globalThis.GUNNER_ENEMY_TARGET_DISTANCE = 400;
+
+/**
+ * How long press-type inputs are considered "pressed" for, in seconds. This allows an action to be
+ * performed even if the key for it is pressed a bit too early (for example, pressing the jump key
+ * just before you hit the ground will still make you jump after you hit the ground). This can make
+ * controls feel much better, assuming your code is set up to correctly use the buffer.
+ * @type {number}
+ */
+globalThis.INPUT_BUFFER_DURATION = 0.15;
 </script>
 <!-- src/assets/sprite-class.js -->
 <script type>
@@ -2763,6 +2772,129 @@ var Kepler = (function() {
 // chuck Kepler into global scope
 globalThis.Kepler = Kepler;
 </script>
+<!-- src/entities/enemies.js -->
+<script type>
+// Returns the smallest distance (delta) between 2 angles.
+// If delta === 0, a and b are the same.
+// If delta < 0, a is to the left of b.
+// If delta > 0, a is to the right of b.
+// If delta === 180 or delta === -180, a and b are opposite.
+/**
+ * Returns the smallest distance (delta) between 2 angles. If delta === 0, `a` and `b` are the same.
+ * If delta < 0, `a` is to the right of `b`. If delta > 0, `a` is to the right of `b`. If
+ * delta === 180 or delta === -180, `a` and `b` are opposite.
+ * @param {number} a
+ * @param {number} b
+ * @returns {number}
+ */
+ function angleDelta(a, b) {
+    return -(((b - a + 180) % 360 - 360) % 360 + 180);
+}
+
+/**
+ * A basic enemy that fires a machine gun at the player.
+ * @class
+ * @extends {Kepler.EntityBase}
+ */
+globalThis.GunnerEnemy = class extends Kepler.EntityBase {
+    /** @type {Sprite} */
+    #sprite;
+
+    /** @type {Vector} */
+    position;
+    /** @type {number} */
+    facingAngle;
+
+
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
+    constructor(x, y) {
+        super();
+        this.displayLayer = -5;
+        this.tags = [
+            "enemy",
+            "buff enemy target"
+        ];
+
+        this.position = createVector(x, y);
+        this.facingAngle = 0;
+
+        this.#sprite = sprites.gunnerEnemy;
+    }
+
+    render() {
+        this.#sprite.render(this.position, this.facingAngle + 90);
+    }
+
+    update(dt) {
+        // aim at the player
+        const angleToPlayer = p5.Vector.sub(this.position, player.position).heading();
+        const angleBetween = angleDelta(this.facingAngle, angleToPlayer);
+
+        // snap to the correct angle if we're close enough
+        const angleStep = GUNNER_ENEMY_TURN_SPEED * dt;
+        if (angleBetween < angleStep) {
+            this.facingAngle = angleToPlayer;
+        }
+        else {
+            this.facingAngle += (angleBetween < 0 ? angleStep : -angleStep);
+        }
+
+        // move toward or away from the player
+        const distanceToPlayer = p5.Vector.sub(this.position, player.position).mag();
+        if (distanceToPlayer < GUNNER_ENEMY_TARGET_DISTANCE - 50) {
+            this.position.add(
+                p5.Vector.fromAngle(radians(this.facingAngle), GUNNER_ENEMY_MOVE_SPEED * dt)
+            );
+        }
+        else if (distanceToPlayer > GUNNER_ENEMY_TARGET_DISTANCE + 50) {
+            this.position.add(
+                p5.Vector.fromAngle(radians(this.facingAngle), -GUNNER_ENEMY_MOVE_SPEED * dt)
+            );
+        }
+    }
+};
+
+/**
+ * A short-range enemy that dashes in and out with a shotgun. Currently WIP - do not use.
+ * @class
+ * @extends {Kepler.EntityBase}
+ */
+globalThis.ShotgunEnemy = class extends Kepler.EntityBase {
+
+};
+
+/**
+ * A long-range enemy that plants itself into the ground and fires telegraphed sniper shots.
+ * Currently WIP - do not use.
+ * @class
+ * @extends {Kepler.EntityBase}
+ */
+globalThis.SniperEnemy = class extends Kepler.EntityBase {
+
+};
+
+/**
+ * A tank enemy that fires a mid-range area denial flamethrower. Currently WIP - do not use.
+ * @class
+ * @extends {Kepler.EntityBase}
+ */
+globalThis.PyroTankEnemy = class extends Kepler.EntityBase {
+
+};
+
+/**
+ * A support enemy that does no damage but gives nearby enemies a shield or a damage boost.
+ * Currently WIP - do not use.
+ * @class
+ * @extends {Kepler.EntityBase}
+ */
+globalThis.BuffEnemy = class extends Kepler.EntityBase {
+
+};
+</script>
 <!-- src/entities/misc.js -->
 <script type>
 // this file is for entities that don't fit into any other category
@@ -3059,7 +3191,7 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
         moveDir.normalize();
 
         // update velocity
-        this.velocity.set(moveDir.mult(400));
+        this.velocity.set(moveDir.mult(PLAYER_MOVE_SPEED));
 
         // apply delta time and move
         this.position.add(p5.Vector.mult(this.velocity, dt));
@@ -3935,10 +4067,8 @@ function setup() {
     // Kepler.addEntity() returns a reference to the entity, so we can store things like the player
     // in a variable for easy access.
     player = Kepler.addEntity(new Player(250, 100));
-
-    Kepler.addEntity(new StaticTarget(300, 250, 0));
-    Kepler.addEntity(new StaticTarget(350, 450, 1));
-    Kepler.addEntity(new StaticTarget(400, 650, 2)); 
+    
+    Kepler.addEntity(new GunnerEnemy(450, 450));
 
     Kepler.cameraZoom = 0.75;
 

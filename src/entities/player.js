@@ -85,7 +85,7 @@ globalThis.Player = class extends Kepler.EntityBase {
         moveDir.normalize();
 
         // update velocity
-        this.velocity.set(moveDir.mult(400));
+        this.velocity.set(moveDir.mult(PLAYER_MOVE_SPEED));
 
         // apply delta time and move
         this.position.add(p5.Vector.mult(this.velocity, dt));

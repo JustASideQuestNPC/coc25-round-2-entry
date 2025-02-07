@@ -173,10 +173,8 @@ function setup() {
     // Kepler.addEntity() returns a reference to the entity, so we can store things like the player
     // in a variable for easy access.
     player = Kepler.addEntity(new Player(250, 100));
-
-    Kepler.addEntity(new StaticTarget(300, 250, 0));
-    Kepler.addEntity(new StaticTarget(350, 450, 1));
-    Kepler.addEntity(new StaticTarget(400, 650, 2)); 
+    
+    Kepler.addEntity(new GunnerEnemy(450, 450));
 
     Kepler.cameraZoom = 0.75;
 
