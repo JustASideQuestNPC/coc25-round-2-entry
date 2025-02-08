@@ -123,6 +123,8 @@ globalThis.GUNNER_ENEMY_BULLET_SPEED = 750;
 /** @type {number} */
 globalThis.GUNNER_ENEMY_BULLET_RANGE = 550;
 /** @type {number} */
+globalThis.GUNNER_ENEMY_BULLET_SIZE = 4;
+/** @type {number} */
 globalThis.GUNNER_ENEMY_RATE_OF_FIRE = 450; // rounds per minute
 /** @type {number} */
 globalThis.GUNNER_ENEMY_MAGAZINE_SIZE = 10;

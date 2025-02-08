@@ -1,8 +1,3 @@
-// Returns the smallest distance (delta) between 2 angles.
-// If delta === 0, a and b are the same.
-// If delta < 0, a is to the left of b.
-// If delta > 0, a is to the right of b.
-// If delta === 180 or delta === -180, a and b are opposite.
 /**
  * Returns the smallest distance (delta) between 2 angles. If delta === 0, `a` and `b` are the same.
  * If delta < 0, `a` is to the right of `b`. If delta > 0, `a` is to the right of `b`. If
@@ -94,11 +89,22 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
             );
         }
 
-        // shoot or reload
+        // shoot
         if (this.firing) {
             this.shotTimer -= dt;
             if (this.shotTimer <= 0) {
-                z
+                // spawn bullets slightly in front
+                const bulletOrigin = p5.Vector.add(
+                    p5.Vector.fromAngle(radians(this.facingAngle), 40), this.position
+                );
+
+                Kepler.addEntity(new Bullet(bulletOrigin,
+                    p5.Vector.fromAngle(radians(this.facingAngle), -GUNNER_ENEMY_BULLET_SPEED),
+                    GUNNER_ENEMY_BULLET_RANGE, GUNNER_ENEMY_BULLET_SIZE
+                ));
+
+                this.shotTimer = 1 / (GUNNER_ENEMY_RATE_OF_FIRE / 60);
+
                 --this.currentAmmo;
                 if (this.currentAmmo === 0) {
                     this.firing = false;
@@ -106,6 +112,18 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
                     this.reloadTimer = GUNNER_ENEMY_RELOAD_TIME;
                 }
             }
+        }
+        // update reload timer
+        else if (this.reloading) {
+            this.reloadTimer -= dt;
+            if (this.reloadTimer < 0) {
+                this.reloading = false;
+                this.currentAmmo = GUNNER_ENEMY_MAGAZINE_SIZE;
+            }
+        }
+        // start firing if we're within range
+        else if (distanceToPlayer < GUNNER_ENEMY_TARGET_DISTANCE + 50) {
+            this.firing = true;
         }
     }
 };

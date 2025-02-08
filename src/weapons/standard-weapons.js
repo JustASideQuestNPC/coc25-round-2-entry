@@ -445,7 +445,7 @@ globalThis.HitscanWeapon = class extends WeaponBase {
             // unlike the p5js map(), Array.map() creates a new array by running a callback function
             // on each item in another array. in this case, we use it to store the distance from the
             // origin to each entity and save a bunch of square root operations when we sort. this
-            // is probably overly complicated and completely necessary, but it's fun so it stays.
+            // is probably overly complicated and completely unnecessary, but it's fun so it stays.
             targets = targets.map((e) => [origin.dist(e.position), e])
                               // caching the distance means our sort function is simpler and faster
                              .sort((a, b) => a[0] - b[0])
