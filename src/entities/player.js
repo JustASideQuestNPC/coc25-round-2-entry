@@ -14,9 +14,11 @@ globalThis.Player = class extends Kepler.EntityBase {
     /** @type {number} */
     facingAngle;
 
+    /** @type {CircleCollider} */
+    collider;
+
     /** @type {number} */
     maxHealth;
-
     /** @type {number} */
     currentHealth;
 
@@ -40,15 +42,12 @@ globalThis.Player = class extends Kepler.EntityBase {
         this.position = createVector(x, y);
         // calling createVector() with no parameters returns a zero vector
         this.velocity = createVector();
-
         this.facingAngle = 0;
-
         // this is currently hard-coded for testing but it will be changed later
         this.currentWeapon = weapons.pistols[0];
-
         this.maxHealth = PLAYER_MAX_HEALTH;
-        // health is currently set to 50% for testing
-        this.currentHealth = this.maxHealth / 2;
+        this.currentHealth = this.maxHealth;
+        this.collider = new CircleCollider(x, y, 50);
     }
 
     update(dt) {
@@ -89,6 +88,8 @@ globalThis.Player = class extends Kepler.EntityBase {
 
         // apply delta time and move
         this.position.add(p5.Vector.mult(this.velocity, dt));
+        this.collider.x = this.position.x;
+        this.collider.y = this.position.y;
 
         // update the camera
         Kepler.setCameraTarget(this.position);
@@ -108,6 +109,7 @@ globalThis.Player = class extends Kepler.EntityBase {
      * @param {number} damage
      */
     takeDamage(damage) {
+        this.currentHealth -= damage;
         console.log(`took ${damage} damage`);
     }
 }

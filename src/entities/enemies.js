@@ -44,7 +44,7 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
         this.displayLayer = -5;
         this.tags = [
             "enemy",
-            "buff enemy target"
+            "buff enemy target",
         ];
 
         this.position = createVector(x, y);
@@ -96,11 +96,13 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
                 // spawn bullets slightly in front
                 const bulletOrigin = p5.Vector.add(
                     p5.Vector.fromAngle(radians(this.facingAngle), 40), this.position
+                )
+                const bulletVelocity = p5.Vector.fromAngle(
+                    radians(this.facingAngle), -GUNNER_ENEMY_BULLET_SPEED
                 );
-
-                Kepler.addEntity(new Bullet(bulletOrigin,
-                    p5.Vector.fromAngle(radians(this.facingAngle), -GUNNER_ENEMY_BULLET_SPEED),
-                    GUNNER_ENEMY_BULLET_RANGE, GUNNER_ENEMY_BULLET_SIZE
+                Kepler.addEntity(new Bullet(
+                    bulletOrigin, bulletVelocity, GUNNER_ENEMY_BULLET_RANGE,
+                    GUNNER_ENEMY_BULLET_SIZE, GUNNER_ENEMY_BULLET_DAMAGE, true
                 ));
 
                 this.shotTimer = 1 / (GUNNER_ENEMY_RATE_OF_FIRE / 60);
@@ -125,6 +127,14 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
         else if (distanceToPlayer < GUNNER_ENEMY_TARGET_DISTANCE + 50) {
             this.firing = true;
         }
+    }
+
+    /**
+     * Called whenever the enemy is hit by a shot from the player's weapons.
+     * @param {number} damage The amount of damage taken.
+     */
+    onBulletHit(damage) {
+        console.log(`GunnerEnemy was hit for ${damage} damage`);
     }
 };
 

@@ -60,6 +60,10 @@ globalThis.Bullet = class extends Kepler.EntityBase {
     collider;
     /** @type {number} */
     size;
+    /** @type {boolean} */
+    firedByEnemy;
+    /** @type {number} */
+    damage;
 
     displayLayer =  10;
 
@@ -68,9 +72,10 @@ globalThis.Bullet = class extends Kepler.EntityBase {
      * @param {Vector} velocity
      * @param {number} maxRange
      * @param {number} size Radius of the bullet's hitbox.
+     * @param {number} damage How much damage the bullet deals.
      * @param {boolean} [firedByEnemy=false] Whether an enemy fired the bullet.
      */
-    constructor(position, velocity, maxRange, size) {
+    constructor(position, velocity, maxRange, size, damage, firedByEnemy=false) {
         super(); // this does literally nothing but is still required because javascript
 
         this.position = position.copy();
@@ -78,6 +83,8 @@ globalThis.Bullet = class extends Kepler.EntityBase {
         this.velocity = velocity.copy();
         this.maxRange = maxRange;
         this.size = size;
+        this.damage = damage;
+        this.firedByEnemy = firedByEnemy;
         this.collider = new CircleCollider(position.x, position.y, size);
     }
 
@@ -95,13 +102,22 @@ globalThis.Bullet = class extends Kepler.EntityBase {
         }
 
         // check for collisions
-        const entities = Kepler.getTagged("player weapon target");
-        for (const entity of entities) {
-            if (this.collider.isColliding(entity.collider)) {
-                entity.onBulletHit();
+        if (this.firedByEnemy) {
+            if (this.collider.isColliding(player.collider)) {
+                player.takeDamage(this.damage);
                 // delete ourselves and skip the rest of the update
                 this.markForRemove = true;
                 return;
+            }
+        }
+        else {
+            const entities = Kepler.getTagged("player weapon target");
+            for (const entity of entities) {
+                if (this.collider.isColliding(entity.collider)) {
+                    entity.onBulletHit(this.damage);
+                    this.markForRemove = true;
+                    return;
+                }
             }
         }
     }

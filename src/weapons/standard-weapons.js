@@ -74,6 +74,12 @@ globalThis.WeaponBase = class {
     reloadDuration;
 
     /**
+     * How much damage each bullet from the weapon deals.
+     * @type {number}
+     */
+    bulletDamage;
+
+    /**
      * Whether the weapon is currently firing a burst.
      * @type {boolean}
      */
@@ -141,9 +147,11 @@ globalThis.WeaponBase = class {
      *      in degrees per second.
      * @param {number} args.magazineSize The weapon's magazine size.
      * @param {number} args.reloadDuration How long the weapon takes to reload, in seconds.
+     * @param {number} args.bulletDamage How much damage each bullet from the weapon deals.
      */
     constructor({ name, fireMode, fireRate, burstRate, shotsPerBurst, bulletsPerShot, minSpread,
-                  maxSpread, spreadBloom, spreadRecovery, magazineSize, reloadDuration }) {
+                  maxSpread, spreadBloom, spreadRecovery, magazineSize, reloadDuration,
+                  bulletDamage }) {
         this.name = name;
         this.fireMode = fireMode;
         this.shotsPerBurst = shotsPerBurst;
@@ -154,6 +162,7 @@ globalThis.WeaponBase = class {
         this.spreadRecovery = spreadRecovery;
         this.maxAmmo = magazineSize;
         this.reloadDuration = reloadDuration;
+        this.bulletDamage = bulletDamage;
         
         // rounds per minute is easier to visualize, but seconds per round makes the math easier
         this.burstDelay = 1 / (fireRate / 60);
@@ -348,6 +357,7 @@ globalThis.ProjectileWeapon = class extends WeaponBase {
      *      in degrees per second.
      * @param {number} args.magazineSize The weapon's magazine size.
      * @param {number} args.reloadDuration How long the weapon takes to reload, in seconds.
+     * @param {number} args.bulletDamage How much damage each bullet from the weapon deals.
      * @param {number} args.shotVelocity Bullet speed in units per second.
      * @param {number} args.maxRange Maximum range of bullets in units.
      * @param {number} args.bulletSize Radius of each bullet's collider in units.
@@ -365,7 +375,7 @@ globalThis.ProjectileWeapon = class extends WeaponBase {
         Kepler.addEntity(new Bullet(origin,
             // for some reason, fromAngle ignores angleMode
             p5.Vector.fromAngle(radians(angle), this.shotVelocity),
-            this.maxRange, this.bulletSize
+            this.maxRange, this.bulletSize, this.bulletDamage
         ));
     }
 };
@@ -407,6 +417,7 @@ globalThis.HitscanWeapon = class extends WeaponBase {
      * @param {number} args.spreadRecovery How quickly the spread angle decreases when not firing,
      * @param {number} args.magazineSize The weapon's magazine size.
      * @param {number} args.reloadDuration How long the weapon takes to reload, in seconds.
+     * @param {number} args.bulletDamage How much damage each bullet from the weapon deals.
      * @param {number} args.maxRange Maximum range of shots in units.
      * @param {number} [args.maxPierce=1] How many targets the shot can pierce.
      */
@@ -454,7 +465,7 @@ globalThis.HitscanWeapon = class extends WeaponBase {
 
             // only hit as many targets as we can pierce
             for (let i = 0; i < targets.length && i < this.maxPierce; ++i) {
-                targets[i].onBulletHit();
+                targets[i].onBulletHit(this.bulletDamage);
             }
         }
     }

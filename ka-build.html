@@ -2834,7 +2834,7 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
         this.displayLayer = -5;
         this.tags = [
             "enemy",
-            "buff enemy target"
+            "buff enemy target",
         ];
 
         this.position = createVector(x, y);
@@ -2886,11 +2886,13 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
                 // spawn bullets slightly in front
                 const bulletOrigin = p5.Vector.add(
                     p5.Vector.fromAngle(radians(this.facingAngle), 40), this.position
+                )
+                const bulletVelocity = p5.Vector.fromAngle(
+                    radians(this.facingAngle), -GUNNER_ENEMY_BULLET_SPEED
                 );
-
-                Kepler.addEntity(new Bullet(bulletOrigin,
-                    p5.Vector.fromAngle(radians(this.facingAngle), -GUNNER_ENEMY_BULLET_SPEED),
-                    GUNNER_ENEMY_BULLET_RANGE, GUNNER_ENEMY_BULLET_SIZE
+                Kepler.addEntity(new Bullet(
+                    bulletOrigin, bulletVelocity, GUNNER_ENEMY_BULLET_RANGE,
+                    GUNNER_ENEMY_BULLET_SIZE, GUNNER_ENEMY_BULLET_DAMAGE, true
                 ));
 
                 this.shotTimer = 1 / (GUNNER_ENEMY_RATE_OF_FIRE / 60);
@@ -2915,6 +2917,14 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
         else if (distanceToPlayer < GUNNER_ENEMY_TARGET_DISTANCE + 50) {
             this.firing = true;
         }
+    }
+
+    /**
+     * Called whenever the enemy is hit by a shot from the player's weapons.
+     * @param {number} damage The amount of damage taken.
+     */
+    onBulletHit(damage) {
+        console.log(`GunnerEnemy was hit for ${damage} damage`);
     }
 };
 
@@ -3020,6 +3030,10 @@ globalThis.Bullet = class extends Kepler.EntityBase {
     collider;
     /** @type {number} */
     size;
+    /** @type {boolean} */
+    firedByEnemy;
+    /** @type {number} */
+    damage;
 
     displayLayer =  10;
 
@@ -3028,9 +3042,10 @@ globalThis.Bullet = class extends Kepler.EntityBase {
      * @param {Vector} velocity
      * @param {number} maxRange
      * @param {number} size Radius of the bullet's hitbox.
+     * @param {number} damage How much damage the bullet deals.
      * @param {boolean} [firedByEnemy=false] Whether an enemy fired the bullet.
      */
-    constructor(position, velocity, maxRange, size) {
+    constructor(position, velocity, maxRange, size, damage, firedByEnemy=false) {
         super(); // this does literally nothing but is still required because javascript
 
         this.position = position.copy();
@@ -3038,6 +3053,8 @@ globalThis.Bullet = class extends Kepler.EntityBase {
         this.velocity = velocity.copy();
         this.maxRange = maxRange;
         this.size = size;
+        this.damage = damage;
+        this.firedByEnemy = firedByEnemy;
         this.collider = new CircleCollider(position.x, position.y, size);
     }
 
@@ -3055,13 +3072,22 @@ globalThis.Bullet = class extends Kepler.EntityBase {
         }
 
         // check for collisions
-        const entities = Kepler.getTagged("player weapon target");
-        for (const entity of entities) {
-            if (this.collider.isColliding(entity.collider)) {
-                entity.onBulletHit();
+        if (this.firedByEnemy) {
+            if (this.collider.isColliding(player.collider)) {
+                player.takeDamage(this.damage);
                 // delete ourselves and skip the rest of the update
                 this.markForRemove = true;
                 return;
+            }
+        }
+        else {
+            const entities = Kepler.getTagged("player weapon target");
+            for (const entity of entities) {
+                if (this.collider.isColliding(entity.collider)) {
+                    entity.onBulletHit(this.damage);
+                    this.markForRemove = true;
+                    return;
+                }
             }
         }
     }
@@ -3182,9 +3208,11 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
     /** @type {number} */
     facingAngle;
 
+    /** @type {CircleCollider} */
+    collider;
+
     /** @type {number} */
     maxHealth;
-
     /** @type {number} */
     currentHealth;
 
@@ -3208,15 +3236,12 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
         this.position = createVector(x, y);
         // calling createVector() with no parameters returns a zero vector
         this.velocity = createVector();
-
         this.facingAngle = 0;
-
         // this is currently hard-coded for testing but it will be changed later
         this.currentWeapon = weapons.pistols[0];
-
         this.maxHealth = PLAYER_MAX_HEALTH;
-        // health is currently set to 50% for testing
-        this.currentHealth = this.maxHealth / 2;
+        this.currentHealth = this.maxHealth;
+        this.collider = new CircleCollider(x, y, 50);
     }
 
     update(dt) {
@@ -3257,6 +3282,8 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
 
         // apply delta time and move
         this.position.add(p5.Vector.mult(this.velocity, dt));
+        this.collider.x = this.position.x;
+        this.collider.y = this.position.y;
 
         // update the camera
         Kepler.setCameraTarget(this.position);
@@ -3276,6 +3303,7 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
      * @param {number} damage
      */
     takeDamage(damage) {
+        this.currentHealth -= damage;
         console.log(`took ${damage} damage`);
     }
 }
