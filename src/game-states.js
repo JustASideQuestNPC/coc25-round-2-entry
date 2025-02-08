@@ -135,12 +135,26 @@ globalThis.GameState = (function() {
             stroke("#ff8000");
             strokeWeight(14);
             strokeCap(SQUARE);
-            const angle = 
-            arc(50, 550, 55, 55, -90, -90 +
-                (player.currentWeapon.remainingAmmo !== 0 ? 360 : (
-                    player.currentWeapon.reloading ? player.currentWeapon.reloadTimer : 0)) +
-                (player.currentWeapon.remainingAmmo * (360 / player.currentWeapon.maxAmmo))
+            
+            const ammoAngle = map(
+                player.currentWeapon.remainingAmmo, 0, player.currentWeapon.maxAmmo, 0, 360
             );
+            if (player.currentWeapon.reloading) {
+                const angle = map(
+                    player.currentWeapon.reloadTimer,
+                    0, player.currentWeapon.reloadDuration, 360, ammoAngle
+                );
+                arc(50, 550, 55, 55, -90, angle - 90);
+            }
+            else if (player.currentWeapon.remainingAmmo !== 0) {
+                arc(50, 550, 55, 55, -90, ammoAngle - 90);
+            }
+
+            // arc(50, 550, 55, 55, -90, -90 +
+            //     (player.currentWeapon.remainingAmmo !== 0 ? 360 : (
+            //         player.currentWeapon.reloading ? player.currentWeapon.reloadTimer : 0)) +
+            //     (player.currentWeapon.remainingAmmo * (360 / player.currentWeapon.maxAmmo))
+            // );
             
             // Bullet
             noStroke();
@@ -159,15 +173,6 @@ globalThis.GameState = (function() {
             strokeWeight(2);
             ellipse(50, 550, 76, 76); // Outer
             ellipse(50, 550, 34, 34); // Inner
-            
-            // Refilling the ammo bar
-            if (player.currentWeapon.reloading) {
-                player.currentWeapon.reloadTimer += player.currentWeapon.reloadDuration * 3;
-            }
-            // Reseting the reload timer
-            if (player.currentWeapon.reloadTimer >= 360) {
-                player.currentWeapon.reloadTimer = 0;
-            }
         },
     };
 
