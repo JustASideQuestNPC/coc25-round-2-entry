@@ -47,7 +47,7 @@ globalThis.Player = class extends Kepler.EntityBase {
         this.currentWeapon = weapons.pistols[0];
         this.maxHealth = PLAYER_MAX_HEALTH;
         this.currentHealth = this.maxHealth;
-        this.collider = new CircleCollider(x, y, 50);
+        this.collider = new CircleCollider(x, y, 40);
     }
 
     update(dt) {

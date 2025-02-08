@@ -30,6 +30,7 @@ globalThis.WEAPONS = {
                 "Doesn't actually shoot peas." // description shown in the ui
             ),
             weaponType: "hitscan",
+            bulletDamage: 10,
             fireMode: "full", // "semi" or "full"
             fireRate: 450, // rounds per minute
             burstRate: -1, // rounds per minute
@@ -130,6 +131,8 @@ globalThis.GUNNER_ENEMY_RATE_OF_FIRE = 450; // rounds per minute
 globalThis.GUNNER_ENEMY_MAGAZINE_SIZE = 10;
 /** @type {number} */
 globalThis.GUNNER_ENEMY_RELOAD_TIME = 2.0; // seconds
+/** @type {number} */
+globalThis.GUNNER_ENEMY_MAX_HEALTH = 20;
 
 /**
  * How long press-type inputs are considered "pressed" for, in seconds. This allows an action to be

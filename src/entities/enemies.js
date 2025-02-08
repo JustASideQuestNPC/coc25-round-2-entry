@@ -23,7 +23,11 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
     position;
     /** @type {number} */
     facingAngle;
+    /** @type {CircleCollider} */
+    collider;
 
+    /** @type {number} */
+    currentHealth;
     /** @type {number} */
     currentAmmo;
     /** @type {number} */
@@ -45,6 +49,7 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
         this.tags = [
             "enemy",
             "buff enemy target",
+            "player weapon target"
         ];
 
         this.position = createVector(x, y);
@@ -54,6 +59,8 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
         this.reloadTimer = 0;
         this.reloading = false;
         this.firing = false;
+        this.collider = new CircleCollider(x, y, 50);
+        this.currentHealth = GUNNER_ENEMY_MAX_HEALTH;
 
         this.#sprite = sprites.gunnerEnemy;
     }
@@ -88,6 +95,9 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
                 p5.Vector.fromAngle(radians(this.facingAngle), -GUNNER_ENEMY_MOVE_SPEED * dt)
             );
         }
+        
+        this.collider.x = this.position.x;
+        this.collider.y = this.position.y;
 
         // shoot
         if (this.firing) {
@@ -135,6 +145,11 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
      */
     onBulletHit(damage) {
         console.log(`GunnerEnemy was hit for ${damage} damage`);
+        this.currentHealth -= damage;
+        if (this.currentHealth <= 0) {
+            console.log("GunnerEnemy was killed.");
+            this.markForRemove = true;
+        }
     }
 };
 

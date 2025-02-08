@@ -61,6 +61,7 @@ globalThis.WEAPONS = {
                 "Doesn't actually shoot peas." // description shown in the ui
             ),
             weaponType: "hitscan",
+            bulletDamage: 10,
             fireMode: "full", // "semi" or "full"
             fireRate: 450, // rounds per minute
             burstRate: -1, // rounds per minute
@@ -161,6 +162,8 @@ globalThis.GUNNER_ENEMY_RATE_OF_FIRE = 450; // rounds per minute
 globalThis.GUNNER_ENEMY_MAGAZINE_SIZE = 10;
 /** @type {number} */
 globalThis.GUNNER_ENEMY_RELOAD_TIME = 2.0; // seconds
+/** @type {number} */
+globalThis.GUNNER_ENEMY_MAX_HEALTH = 20;
 
 /**
  * How long press-type inputs are considered "pressed" for, in seconds. This allows an action to be
@@ -2813,7 +2816,11 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
     position;
     /** @type {number} */
     facingAngle;
+    /** @type {CircleCollider} */
+    collider;
 
+    /** @type {number} */
+    currentHealth;
     /** @type {number} */
     currentAmmo;
     /** @type {number} */
@@ -2835,6 +2842,7 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
         this.tags = [
             "enemy",
             "buff enemy target",
+            "player weapon target"
         ];
 
         this.position = createVector(x, y);
@@ -2844,6 +2852,8 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
         this.reloadTimer = 0;
         this.reloading = false;
         this.firing = false;
+        this.collider = new CircleCollider(x, y, 50);
+        this.currentHealth = GUNNER_ENEMY_MAX_HEALTH;
 
         this.#sprite = sprites.gunnerEnemy;
     }
@@ -2878,6 +2888,9 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
                 p5.Vector.fromAngle(radians(this.facingAngle), -GUNNER_ENEMY_MOVE_SPEED * dt)
             );
         }
+        
+        this.collider.x = this.position.x;
+        this.collider.y = this.position.y;
 
         // shoot
         if (this.firing) {
@@ -2925,6 +2938,11 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
      */
     onBulletHit(damage) {
         console.log(`GunnerEnemy was hit for ${damage} damage`);
+        this.currentHealth -= damage;
+        if (this.currentHealth <= 0) {
+            console.log("GunnerEnemy was killed.");
+            this.markForRemove = true;
+        }
     }
 };
 
@@ -3241,7 +3259,7 @@ globalThis.StaticTarget = class extends Kepler.EntityBase {
         this.currentWeapon = weapons.pistols[0];
         this.maxHealth = PLAYER_MAX_HEALTH;
         this.currentHealth = this.maxHealth;
-        this.collider = new CircleCollider(x, y, 50);
+        this.collider = new CircleCollider(x, y, 40);
     }
 
     update(dt) {
