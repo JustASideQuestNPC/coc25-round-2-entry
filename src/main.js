@@ -165,7 +165,7 @@ function setup() {
 
     // set up some camera stuff
     Kepler.cameraEnabled = true;
-    Kepler.setViewportBounds(0, 0, 1200, 1200);
+    Kepler.setViewportBounds(0, 0, 1500, 1500);
 
     // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
     Kepler.addEntity(new BackgroundGrid(4, 4));
@@ -174,7 +174,9 @@ function setup() {
     // in a variable for easy access.
     player = Kepler.addEntity(new Player(250, 100));
     
-    Kepler.addEntity(new GunnerEnemy(450, 450));
+    Kepler.addEntity(new BuffEnemy(500, 550, "speed"));
+    Kepler.addEntity(new BuffEnemy(1000, 550, "shield"));
+    Kepler.addEntity(new GunnerEnemy(1000, 550));
 
     Kepler.cameraZoom = 0.75;
 

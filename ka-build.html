@@ -149,7 +149,7 @@ globalThis.GUNNER_ENEMY_TURN_SPEED = 90; // degrees per second
  */
 globalThis.GUNNER_ENEMY_TARGET_DISTANCE = 400;
 /** @type {number} */
-globalThis.GUNNER_ENEMY_BULLET_DAMAGE = 2;
+globalThis.GUNNER_ENEMY_BULLET_DAMAGE = 4;
 /** @type {number} */
 globalThis.GUNNER_ENEMY_BULLET_SPEED = 750;
 /** @type {number} */
@@ -163,7 +163,17 @@ globalThis.GUNNER_ENEMY_MAGAZINE_SIZE = 10;
 /** @type {number} */
 globalThis.GUNNER_ENEMY_RELOAD_TIME = 2.0; // seconds
 /** @type {number} */
-globalThis.GUNNER_ENEMY_MAX_HEALTH = 20;
+globalThis.GUNNER_ENEMY_MAX_HEALTH = 40;
+
+/** @type {number} */
+globalThis.BUFF_ENEMY_MAX_HEALTH = 100;
+/** @type {number} */
+globalThis.BUFF_ENEMY_NUM_TARGETS = 3;
+/**
+ * Buffed entities move and attack this much faster.
+ * @type {number}
+ */
+globalThis.SPEED_BUFF_INTENSITY = 1.5;
 
 /**
  * How long press-type inputs are considered "pressed" for, in seconds. This allows an action to be
@@ -600,11 +610,11 @@ globalThis.INPUT_BUFFER_DURATION = 0.15;
             // Center circle
             g.circle(0, -15, 40);
             
-            // Barrol stand
+            // Barrel stand
             g.quad(-10, -27, -5, -20, -5, -8, -10, -8);
             g.quad(10, -27, 5, -20, 5, -8, 10, -8);
             
-            // Barrol
+            // Barrel
             g.rect(0, -3, 18, 10);
             g.rect(-4, 19, 6, 35);
             g.rect(6, 12, 6, 20);
@@ -730,7 +740,7 @@ globalThis.INPUT_BUFFER_DURATION = 0.15;
             
         }
     },
-    damageBuffEnemy: {
+    speedBuffEnemy: {
         width: 80,
         height: 80,
         origin: [40, 40],
@@ -2832,6 +2842,11 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
     /** @type {boolean} */
     firing;
 
+    /** @type {boolean} */
+    shielded;
+    /** @type {boolean} */
+    speedBuff;
+
     /**
      * @param {number} x
      * @param {number} y
@@ -2855,6 +2870,9 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
         this.collider = new CircleCollider(x, y, 50);
         this.currentHealth = GUNNER_ENEMY_MAX_HEALTH;
 
+        this.shielded = false;
+        this.speedBuff = false;
+
         this.#sprite = sprites.gunnerEnemy;
     }
 
@@ -2863,6 +2881,9 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
     }
 
     update(dt) {
+        // apply speed buff
+        if (this.speedBuff) { dt *= SPEED_BUFF_INTENSITY; }
+
         // aim at the player
         const angleToPlayer = p5.Vector.sub(this.position, player.position).heading();
         const angleBetween = angleDelta(this.facingAngle, angleToPlayer);
@@ -2898,7 +2919,7 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
             if (this.shotTimer <= 0) {
                 // spawn bullets slightly in front
                 const bulletOrigin = p5.Vector.add(
-                    p5.Vector.fromAngle(radians(this.facingAngle), 40), this.position
+                    p5.Vector.fromAngle(radians(this.facingAngle), -10), this.position
                 )
                 const bulletVelocity = p5.Vector.fromAngle(
                     radians(this.facingAngle), -GUNNER_ENEMY_BULLET_SPEED
@@ -2937,6 +2958,8 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
      * @param {number} damage The amount of damage taken.
      */
     onBulletHit(damage) {
+        if (this.shielded) { return; }
+
         console.log(`GunnerEnemy was hit for ${damage} damage`);
         this.currentHealth -= damage;
         if (this.currentHealth <= 0) {
@@ -2951,9 +2974,7 @@ globalThis.GunnerEnemy = class extends Kepler.EntityBase {
  * @class
  * @extends {Kepler.EntityBase}
  */
-globalThis.ShotgunEnemy = class extends Kepler.EntityBase {
-
-};
+globalThis.ShotgunEnemy = class extends Kepler.EntityBase {};
 
 /**
  * A long-range enemy that plants itself into the ground and fires telegraphed sniper shots.
@@ -2961,27 +2982,161 @@ globalThis.ShotgunEnemy = class extends Kepler.EntityBase {
  * @class
  * @extends {Kepler.EntityBase}
  */
-globalThis.SniperEnemy = class extends Kepler.EntityBase {
-
-};
+globalThis.SniperEnemy = class extends Kepler.EntityBase {};
 
 /**
  * A tank enemy that fires a mid-range area denial flamethrower. Currently WIP - do not use.
  * @class
  * @extends {Kepler.EntityBase}
  */
-globalThis.PyroTankEnemy = class extends Kepler.EntityBase {
-
-};
+globalThis.PyroTankEnemy = class extends Kepler.EntityBase {};
 
 /**
- * A support enemy that does no damage but gives nearby enemies a shield or a damage boost.
- * Currently WIP - do not use.
+ * A support enemy that doesn't move and does no damage but gives nearby enemies a shield or a
+ * damage boost. Currently WIP - do not use.
  * @class
  * @extends {Kepler.EntityBase}
  */
 globalThis.BuffEnemy = class extends Kepler.EntityBase {
+    /** @type {Sprite} */
+    #sprite;
 
+    /** @type {Vector} */
+    position;
+    /** @type {CircleCollider} */
+    collider;
+
+    /** @type {"speed"|"shield"} */
+    buffType;
+
+    /** @type {number} */
+    currentHealth;
+
+    /** @type {Kepler.EntityBase[]} */
+    buffedEntities;
+
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @param {"speed"|"shield"} buffType
+     */
+    constructor(x, y, buffType) {
+        super();
+        this.displayLayer = -3;
+        this.tags = [
+            "enemy",
+            "player weapon target"
+        ];
+        
+        this.buffedEntities = [];
+
+        this.position = createVector(x, y);
+        this.buffType = buffType;
+
+        // damage and shield variants have slightly different sprites
+        this.#sprite = (buffType === "speed" ? sprites.speedBuffEnemy : sprites.shieldBuffEnemy);
+
+        this.collider = new CircleCollider(x, y, 35);
+        this.currentHealth = BUFF_ENEMY_MAX_HEALTH;
+    }
+
+    update(dt) {
+        // prevents issues if this gets called after the enemy is killed
+        if (this.markForRemove) { return; }
+
+        // get all potential targets and sort them by how far they are from us
+        const targets = Kepler.getTagged("buff enemy target")
+                              .map((e) => [this.position.dist(e.position), e])
+                              .sort((a, b) => a[0] - b[0])
+                              .map((e) => e[1]);
+        
+        // mark the nearest ones to us as buffed
+        const temp = [];
+        for (let i = 0; i < targets.length; ++i) {
+            // check whether the entity is being buffed by something other than us
+            let isAlreadyBuffed;
+            if (this.buffType === "speed") {
+                isAlreadyBuffed = (
+                    targets[i].speedBuff && !this.buffedEntities.includes(targets[i])
+                );
+            }
+            else {
+                isAlreadyBuffed = (
+                    targets[i].shielded && !this.buffedEntities.includes(targets[i])
+                );
+            }
+            
+            if (!isAlreadyBuffed && temp.length < BUFF_ENEMY_NUM_TARGETS) {
+                if (this.buffType === "speed") {
+                    targets[i].speedBuff = true;
+                }
+                else {
+                    targets[i].shielded = true;
+                }
+                temp.push(targets[i]);
+            }
+            else {
+                if (this.buffType === "speed") {
+                    targets[i].speedBuff = false;
+                }
+                else {
+                    targets[i].shielded = false;
+                }
+            }
+        }
+
+        this.buffedEntities = temp;
+    }
+
+    render() {
+        this.#sprite.render(this.position);
+
+        // draw buff auras
+        for (const target of this.buffedEntities) {
+            if (this.buffType === "speed") {
+                noStroke();
+                fill("#e60a0a64");
+            }
+            else {
+                noFill();
+                stroke("#0fa7ff");
+                strokeWeight(4);
+            }
+
+            circle(target.position.x, target.position.y, 120, 120);
+
+            // if (this.buffType === "speed") {
+            //     stroke("#e60a0a");
+            // }
+            
+            // strokeWeight(6);
+            // line(target.position.x, target.position.y, this.position.x, this.position.y);
+        }
+    }
+
+    /**
+     * Called whenever the enemy is hit by a shot from the player's weapons.
+     * @param {number} damage The amount of damage taken.
+     */
+    onBulletHit(damage) {
+        console.log(`BuffEnemy was hit for ${damage} damage`);
+        this.currentHealth -= damage;
+        if (this.currentHealth <= 0) {
+            console.log("BuffEnemy was killed.");
+
+            // de-buff all entities
+            for (const e of this.buffedEntities) {
+                if (this.buffType === "speed") {
+                    e.speedBuff = false;
+                }
+                else {
+                    e.shielded = false;
+                }
+            }
+
+            this.markForRemove = true;
+        }
+    }
 };
 </script>
 <!-- src/entities/misc.js -->
@@ -4180,7 +4335,7 @@ function setup() {
 
     // set up some camera stuff
     Kepler.cameraEnabled = true;
-    Kepler.setViewportBounds(0, 0, 1200, 1200);
+    Kepler.setViewportBounds(0, 0, 1500, 1500);
 
     // add entities - eventually this will be done procedurally, but for now i'm just hard-coding it
     Kepler.addEntity(new BackgroundGrid(4, 4));
@@ -4189,7 +4344,9 @@ function setup() {
     // in a variable for easy access.
     player = Kepler.addEntity(new Player(250, 100));
     
-    Kepler.addEntity(new GunnerEnemy(450, 450));
+    Kepler.addEntity(new BuffEnemy(500, 550, "speed"));
+    Kepler.addEntity(new BuffEnemy(1000, 550, "shield"));
+    Kepler.addEntity(new GunnerEnemy(1000, 550));
 
     Kepler.cameraZoom = 0.75;
 

@@ -118,7 +118,7 @@ globalThis.GUNNER_ENEMY_TURN_SPEED = 90; // degrees per second
  */
 globalThis.GUNNER_ENEMY_TARGET_DISTANCE = 400;
 /** @type {number} */
-globalThis.GUNNER_ENEMY_BULLET_DAMAGE = 2;
+globalThis.GUNNER_ENEMY_BULLET_DAMAGE = 4;
 /** @type {number} */
 globalThis.GUNNER_ENEMY_BULLET_SPEED = 750;
 /** @type {number} */
@@ -132,7 +132,17 @@ globalThis.GUNNER_ENEMY_MAGAZINE_SIZE = 10;
 /** @type {number} */
 globalThis.GUNNER_ENEMY_RELOAD_TIME = 2.0; // seconds
 /** @type {number} */
-globalThis.GUNNER_ENEMY_MAX_HEALTH = 20;
+globalThis.GUNNER_ENEMY_MAX_HEALTH = 40;
+
+/** @type {number} */
+globalThis.BUFF_ENEMY_MAX_HEALTH = 100;
+/** @type {number} */
+globalThis.BUFF_ENEMY_NUM_TARGETS = 3;
+/**
+ * Buffed entities move and attack this much faster.
+ * @type {number}
+ */
+globalThis.SPEED_BUFF_INTENSITY = 1.5;
 
 /**
  * How long press-type inputs are considered "pressed" for, in seconds. This allows an action to be

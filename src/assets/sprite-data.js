@@ -343,11 +343,11 @@ globalThis.SPRITE_DATA = {
             // Center circle
             g.circle(0, -15, 40);
             
-            // Barrol stand
+            // Barrel stand
             g.quad(-10, -27, -5, -20, -5, -8, -10, -8);
             g.quad(10, -27, 5, -20, 5, -8, 10, -8);
             
-            // Barrol
+            // Barrel
             g.rect(0, -3, 18, 10);
             g.rect(-4, 19, 6, 35);
             g.rect(6, 12, 6, 20);
@@ -473,7 +473,7 @@ globalThis.SPRITE_DATA = {
             
         }
     },
-    damageBuffEnemy: {
+    speedBuffEnemy: {
         width: 80,
         height: 80,
         origin: [40, 40],
